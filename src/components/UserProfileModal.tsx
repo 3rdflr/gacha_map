@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { X, Camera, Save } from 'lucide-react';
@@ -18,14 +18,9 @@ export default function UserProfileModal({ user, isOpen, onClose }: UserProfileM
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 프로필 데이터 불러오기
-  useEffect(() => {
-    if (isOpen && user) {
-      loadProfile();
-    }
-  }, [isOpen, user]);
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
 
-  const loadProfile = async () => {
     setIsLoading(true);
 
     const { data } = await supabase
@@ -44,7 +39,13 @@ export default function UserProfileModal({ user, isOpen, onClose }: UserProfileM
     }
 
     setIsLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      loadProfile();
+    }
+  }, [isOpen, user, loadProfile]);
 
   const handleSave = async () => {
     if (!nickname.trim()) {
