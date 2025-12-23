@@ -82,11 +82,10 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
-  // 네이버 & 구글 서치 콘솔 소유권 확인 (필요 시 주석 해제 후 코드 삽입)
-  // verification: {
-  //   google: '구글에서발급받은코드',
-  //   naver: '네이버에서발급받은코드',
-  // },
+
+  verification: {
+    google: 'google-site-verification=DBe2J_NaFFvwZzy3S0SOdQPurcIw3tnTe1M9NnsAtEA',
+  },
 };
 
 export default function RootLayout({
