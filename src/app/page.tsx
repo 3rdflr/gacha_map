@@ -18,7 +18,7 @@ export default async function Home() {
       </section>
 
       {/* 광고 (지도 위 or 아래 중 선택) */}
-      <section className='mx-auto w-full max-w-[720px] px-4'>
+      <section className='w-full h-auto'>
         <GoogleAd slot='HOME_TOP' />
       </section>
     </main>
