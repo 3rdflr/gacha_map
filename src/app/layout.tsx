@@ -43,9 +43,9 @@ export const metadata: Metadata = {
     '은혼',
     '드래곤볼',
   ],
-  authors: [{ name: '사이트 이름' }],
-  creator: '사이트 이름',
-  publisher: '사이트 이름',
+  authors: [{ name: '국내 가챠 지도' }],
+  creator: '국내 가챠 지도',
+  publisher: '국내 가챠 지도',
   formatDetection: {
     email: false,
     address: false,
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '국내 가챠 지도',
     description: '가챠, 캡슐토이, 제일복권 전문! 다양한 애니 굿즈 정보를 확인하세요.',
-    url: 'https://your-domain.com',
+    url: 'https://gachamap.vercel.app/',
     siteName: '사이트 이름',
     images: [
       {
