@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'http',
@@ -15,11 +16,6 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-  },
-};
-module.exports = {
-  images: {
-    formats: ['image/avif', 'image/webp'],
   },
 };
 
