@@ -6,7 +6,7 @@ import AuthProvider from '@/components/AuthProvider';
 import './globals.css';
 import Notice from '@/components/Notice';
 
-export const API = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&libraries=services,clusterer&autoload=false`;
+const API = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&libraries=services,clusterer&autoload=false`;
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -19,7 +19,6 @@ const geistMono = localFont({
   weight: '100 900',
 });
 
-// --- SEO 최적화 Metadata 설정 ---
 export const metadata: Metadata = {
   title: '국내 가챠 지도',
   description:
@@ -62,7 +61,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '국내 가챠 지도',
     description: '가챠, 캡슐토이, 제일복권 전문! 다양한 애니 굿즈 정보를 확인하세요.',
-    url: 'https://your-domain.com', // 실제 배포될 도메인 주소로 변경하세요
+    url: 'https://your-domain.com',
     siteName: '사이트 이름',
     images: [
       {
