@@ -90,7 +90,7 @@ export default function Header() {
               onClick={handleLogin}
               className='bg-[#FEE500] hover:bg-[#FDD835] text-black text-sm font-bold px-4 py-2 rounded-full shadow-md transition-transform active:scale-95 flex items-center gap-2'
             >
-              <span className='hidden xs:inline'>카카오</span> 로그인
+              <span className='hidden xs:inline'>카카오 로그인</span>
             </button>
           )}
         </div>
