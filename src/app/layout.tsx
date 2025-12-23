@@ -65,9 +65,9 @@ export const metadata: Metadata = {
     siteName: '사이트 이름',
     images: [
       {
-        url: 'logo.png',
-        width: 1024,
-        height: 1024,
+        url: 'og-image.png',
+        width: 1200,
+        height: 630,
         alt: '가챠 굿즈 사이트 이미지',
       },
     ],
@@ -80,6 +80,12 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
+    },
+  },
+  verification: {
+    google: 'DyfCGBN6qFzr0KwA2ZAJlmYv0X0j3k20OwbSTMfTkF0',
+    other: {
+      'naver-site-verification': 'aee1fbe4c7241ef08c45edc653bde79833584b0b',
     },
   },
 };

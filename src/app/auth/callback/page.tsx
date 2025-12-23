@@ -28,9 +28,8 @@ export default function AuthCallback() {
 
   return (
     <div className='flex h-screen w-full flex-col items-center justify-center gap-4'>
-      {/* 사용자가 보게 될 로딩 화면 */}
       <div className='w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin' />
-      <p className='text-lg font-medium'>로그인 완료 중...</p>
+      <p className='text-lg font-medium'>카카오로그인 중...</p>
     </div>
   );
 }
