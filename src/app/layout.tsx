@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import localFont from 'next/font/local';
 import AuthProvider from '@/components/AuthProvider';
-
 import './globals.css';
 import Notice from '@/components/Notice';
+import Footer from '@/components/Footer';
 
 const API = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&libraries=services,clusterer&autoload=false`;
 
@@ -82,10 +82,6 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
-
-  verification: {
-    google: 'google-site-verification=DBe2J_NaFFvwZzy3S0SOdQPurcIw3tnTe1M9NnsAtEA',
-  },
 };
 
 export default function RootLayout({
@@ -101,11 +97,11 @@ export default function RootLayout({
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
           crossOrigin='anonymous'
-          strategy='lazyOnload'
         />
         <AuthProvider>
           <Notice />
           {children}
+          <Footer />
         </AuthProvider>
       </body>
     </html>

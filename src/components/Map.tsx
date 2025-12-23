@@ -81,7 +81,7 @@ export default function KakaoMap({ shops }: MapProps) {
   };
 
   return (
-    <div className='relative w-full h-[80vh] rounded-2xl'>
+    <div className='relative w-full h-[80vh] rounded-2xl mb-10'>
       {/* 카테고리 필터 (지도 위에 띄움) */}
       <div className='absolute top-4 left-0 right-0 z-10 px-4'>
         <div className='flex gap-2 overflow-x-auto pb-2 scrollbar-hide'>

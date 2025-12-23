@@ -8,14 +8,19 @@ export default async function Home() {
   const shops = await getVerifiedShops();
 
   return (
-    <main className='w-full h-screen relative'>
-      {/* 헤더 컴포넌트 */}
+    <main className='flex min-h-screen flex-col'>
+      {/* 헤더 */}
       <Header />
-      <div className='absolute top-20 left-1 right-1 z-10 bg-white p-4 gap-10'>
-        {/* 지도 컴포넌트 */}
+
+      {/* 지도 */}
+      <section className='flex-1'>
         <KakaoMap shops={shops} />
-        <GoogleAd slot='' />
-      </div>
+      </section>
+
+      {/* 광고 (지도 위 or 아래 중 선택) */}
+      <section className='mx-auto w-full max-w-[720px] px-4'>
+        <GoogleAd slot='HOME_TOP' />
+      </section>
     </main>
   );
 }
