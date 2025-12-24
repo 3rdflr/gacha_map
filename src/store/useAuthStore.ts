@@ -40,20 +40,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     set({ isLoading: true });
 
-    // 현재 세션 확인
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    try {
+      // 현재 세션 확인
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    if (session?.user) {
-      set({ user: session.user });
-      await get().loadProfile(session.user.id);
+      console.log('🔐 세션 확인:', session ? '로그인됨' : '로그인 안됨');
+
+      if (session?.user) {
+        set({ user: session.user });
+        await get().loadProfile(session.user.id);
+      }
+    } catch (error) {
+      console.error('❌ 세션 로드 실패:', error);
     }
 
     set({ isLoading: false });
 
     // 실시간 인증 상태 변경 감지
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 인증 상태 변경:', event, session?.user?.email);
+
       const user = session?.user || null;
       set({ user });
 

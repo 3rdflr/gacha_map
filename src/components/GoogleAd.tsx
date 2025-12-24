@@ -17,7 +17,7 @@ interface GoogleAdProps {
   style?: React.CSSProperties;
 }
 
-const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID; // 환경 변수 사용 권장
+const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
 export default function GoogleAd({
   slot,

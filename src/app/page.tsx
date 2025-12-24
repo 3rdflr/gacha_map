@@ -19,7 +19,7 @@ export default async function Home() {
 
       {/* 광고 (지도 위 or 아래 중 선택) */}
       <section className='w-full h-auto'>
-        <GoogleAd slot='HOME_TOP' />
+        <GoogleAd slot='6852499093' />
       </section>
     </main>
   );

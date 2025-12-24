@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import GoogleAd from './GoogleAd';
 
 export default function Notice() {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,12 +52,6 @@ export default function Notice() {
               별도의 외부 유료 광고 협찬 없이 운영되오니, <br />
               새로운 정보가 있다면 언제든 제보 부탁드립니다!
             </p>
-          </div>
-
-          {/* 구글 광고 영역 */}
-          <div className='mt-6 rounded-lg border border-gray-100 bg-gray-50 p-2'>
-            {/* 실제 슬롯 번호를 넣어주세요 */}
-            <GoogleAd slot='1234567890' format='rectangle' />
           </div>
 
           {/* 버튼 영역 */}

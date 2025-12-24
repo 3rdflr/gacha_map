@@ -1,16 +1,41 @@
 import ReviewForm from '@/components/ReviewForm';
 import ReportForm from '@/components/ReportForm';
 import { Shop } from '@/types/db';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 
 interface BottomSheetProps {
-  shop: Shop | null; // 선택된 가게 정보
-  onClose: () => void; // 시트를 닫는 함수
+  shop: Shop | null;
+  onClose: () => void;
 }
 
 export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
-  // shop이 null이면 시트를 렌더링하지 않습니다.
   const isOpen = !!shop;
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // 이미지가 있는지 확인 (null, undefined, 빈 배열 모두 체크)
+  const hasImages = shop?.images && Array.isArray(shop.images) && shop.images.length > 0;
+
+  // 다음 이미지로 이동
+  const nextImage = () => {
+    if (hasImages && shop) {
+      setCurrentImageIndex((prev) => (prev + 1) % shop.images!.length);
+    }
+  };
+
+  // 이전 이미지로 이동
+  const prevImage = () => {
+    if (hasImages && shop) {
+      setCurrentImageIndex((prev) => (prev - 1 + shop.images!.length) % shop.images!.length);
+    }
+  };
+
+  // 시트가 닫힐 때 이미지 인덱스 초기화
+  const handleClose = () => {
+    setCurrentImageIndex(0);
+    onClose();
+  };
 
   return (
     <div
@@ -19,31 +44,83 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
         ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}
       `}
     >
-      {/* 1. Backdrop (배경) - 클릭 시 시트 닫기 */}
+      {/* 배경 오버레이 */}
       <div
         className={`absolute inset-0 bg-black transition-opacity duration-300 
           ${isOpen ? 'opacity-50' : 'opacity-0'}
         `}
-        onClick={onClose}
+        onClick={handleClose}
       />
 
-      {/* 2. Bottom Sheet Panel */}
+      {/* Bottom Sheet Panel */}
       <div
         className={`absolute bottom-0 w-full bg-white rounded-t-xl shadow-2xl transition-transform duration-300 p-4
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}
           max-h-[90vh] overflow-y-auto
         `}
       >
-        {shop && ( // shop 데이터가 있을 때만 내용 표시
+        {shop && (
           <>
             {/* 닫기 버튼 */}
             <button
-              onClick={onClose}
-              className='absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200'
+              onClick={handleClose}
+              className='absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 z-10'
               aria-label='닫기'
             >
               <X className='w-5 h-5 text-gray-600' />
             </button>
+
+            {/* 이미지 갤러리 (이미지가 있을 때만 표시) */}
+            {hasImages && (
+              <div className='relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gray-100'>
+                <Image
+                  src={shop.images![currentImageIndex]}
+                  alt={`${shop.name} - ${currentImageIndex + 1}`}
+                  fill
+                  className='object-cover'
+                  sizes='100vw'
+                />
+
+                {/* 이미지가 2개 이상일 때만 네비게이션 버튼 표시 */}
+                {shop.images!.length > 1 && (
+                  <>
+                    {/* 이전 버튼 */}
+                    <button
+                      onClick={prevImage}
+                      className='absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors'
+                      aria-label='이전 이미지'
+                    >
+                      <ChevronLeft className='w-6 h-6' />
+                    </button>
+
+                    {/* 다음 버튼 */}
+                    <button
+                      onClick={nextImage}
+                      className='absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors'
+                      aria-label='다음 이미지'
+                    >
+                      <ChevronRight className='w-6 h-6' />
+                    </button>
+
+                    {/* 이미지 인디케이터 */}
+                    <div className='absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5'>
+                      {shop.images!.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            index === currentImageIndex
+                              ? 'bg-white w-6'
+                              : 'bg-white/50 hover:bg-white/80'
+                          }`}
+                          aria-label={`이미지 ${index + 1}로 이동`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* 가게 이름 및 기본 정보 */}
             <h2 className='text-2xl font-bold mb-1 pr-10'>{shop.name}</h2>
@@ -92,28 +169,29 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
               {shop.homepage && (
                 <div className='flex items-center space-x-2'>
                   <span className='font-semibold w-20'>웹사이트</span>
-                  {shop.homepage.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='text-blue-600 hover:underline truncate max-w-[calc(100%-80px)]'
-                    >
-                      {link}
-                    </a>
-                  ))}
+                  <div className='flex-1 flex flex-col gap-1'>
+                    {shop.homepage.map((link, index) => (
+                      <a
+                        key={index}
+                        href={link}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:underline truncate'
+                      >
+                        {link}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* 리뷰 작성 폼 */}
+            {/* 리뷰 작성 폼 (로그인 시에만 표시) */}
             <ReviewForm shopId={shop.id} />
 
             {/* 신고 폼 */}
             <ReportForm shopId={shop.id} />
 
-            {/* 최종 업데이트 날짜 */}
             <p className='mt-6 text-xs text-right text-gray-400'>
               최종 업데이트: {new Date(shop.last_updated).toLocaleDateString('ko-KR')}
             </p>

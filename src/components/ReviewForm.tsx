@@ -79,13 +79,6 @@ export default function ReviewForm({ shopId }: { shopId: number }) {
             </button>
           ))}
         </div>
-        <p className='text-xs text-gray-500 mt-1'>
-          {rating === 5 && '⭐ 최고예요!'}
-          {rating === 4 && '⭐ 좋아요'}
-          {rating === 3 && '⭐ 괜찮아요'}
-          {rating === 2 && '⭐ 별로예요'}
-          {rating === 1 && '⭐ 최악이에요'}
-        </p>
       </div>
 
       {/* 리뷰 내용 입력 */}
