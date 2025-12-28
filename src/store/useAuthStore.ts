@@ -36,39 +36,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ profile: data || null });
   },
 
-  // 초기화: 세션 확인 및 실시간 리스너 설정
   initialize: async () => {
-    set({ isLoading: true });
+    // 이미 로딩이 끝난 상태라면 중복 실행 방지
+    // set({ isLoading: true }); // 제거하거나 필요시 유지
 
     try {
-      // 현재 세션 확인
+      // 1. 현재 세션 즉시 확인
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
-      console.log('🔐 세션 확인:', session ? '로그인됨' : '로그인 안됨');
 
       if (session?.user) {
         set({ user: session.user });
         await get().loadProfile(session.user.id);
       }
     } catch (error) {
-      console.error('❌ 세션 로드 실패:', error);
+      console.error('❌ 초기 세션 확인 실패:', error);
+    } finally {
+      // 2. 초기 로드 완료 표시 (매우 중요)
+      set({ isLoading: false });
     }
 
-    set({ isLoading: false });
-
-    // 실시간 인증 상태 변경 감지
+    // 3. 실시간 리스너 설정 (한 번만 등록되도록 주의)
     supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 인증 상태 변경:', event, session?.user?.email);
+      console.log('🔄 인증 상태 변경:', event);
 
       const user = session?.user || null;
-      set({ user });
 
-      if (user) {
-        await get().loadProfile(user.id);
-      } else {
-        set({ profile: null });
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        set({ user, isLoading: true }); // 다시 로딩 시작
+        await get().loadProfile(user!.id);
+        set({ isLoading: false });
+      } else if (event === 'SIGNED_OUT') {
+        set({ user: null, profile: null, isLoading: false });
+      } else if (event === 'INITIAL_SESSION') {
+        // 초기 세션 로드 시에도 로딩 종료 보장
+        set({ isLoading: false });
       }
     });
   },
