@@ -1,20 +1,32 @@
 import ReviewForm from '@/components/ReviewForm';
 import ReportForm from '@/components/ReportForm';
-import { Shop } from '@/types/db';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { Shop } from '@/types/db';
+import GoogleAd, { loadAds } from '@/components/GoogleAd';
+import { X, ChevronLeft, ChevronRight, ArrowLeft, MapPin } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface BottomSheetProps {
+  mode: 'detail' | 'list';
   shop: Shop | null;
+  shops: Shop[];
   onClose: () => void;
+  onShopSelect?: (shop: Shop) => void;
+  onBackToList?: () => void; // ⭐️ 리스트로 돌아가기 콜백
 }
 
-export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
-  const isOpen = !!shop;
+export default function BottomSheet({
+  mode,
+  shop,
+  shops,
+  onClose,
+  onShopSelect,
+  onBackToList,
+}: BottomSheetProps) {
+  const isOpen = mode === 'detail' ? !!shop : shops.length > 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // 이미지가 있는지 확인 (null, undefined, 빈 배열 모두 체크)
+  // 이미지가 있는지 확인
   const hasImages = shop?.images && Array.isArray(shop.images) && shop.images.length > 0;
 
   // 다음 이미지로 이동
@@ -36,6 +48,39 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
     setCurrentImageIndex(0);
     onClose();
   };
+
+  // 리스트에서 가게 선택
+  const handleShopClick = (selectedShop: Shop) => {
+    if (onShopSelect) {
+      onShopSelect(selectedShop);
+    }
+  };
+
+  // ⭐️ 광고가 삽입된 리스트를 useMemo로 메모이제이션
+  const itemsWithAds = useMemo(() => {
+    if (mode !== 'list') return [];
+
+    const result: (Shop | 'ad')[] = [];
+    shops.forEach((shop, index) => {
+      result.push(shop);
+      // 10개마다 광고 삽입
+      if ((index + 1) % 10 === 0 && index !== shops.length - 1) {
+        result.push('ad');
+      }
+    });
+    return result;
+  }, [mode, shops]); // shops 배열이 변경될 때만 재계산
+
+  // 광고 로드
+  useEffect(() => {
+    if (mode === 'list' && isOpen) {
+      // 약간의 딜레이를 주어 DOM이 렌더링된 후 광고 로드
+      const timer = setTimeout(() => {
+        loadAds();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, isOpen]);
 
   return (
     <div
@@ -59,8 +104,102 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
           max-h-[90vh] overflow-y-auto
         `}
       >
-        {shop && (
+        {/* 리스트 모드 */}
+        {mode === 'list' && (
           <>
+            <button
+              onClick={handleClose}
+              className='absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 z-10'
+              aria-label='닫기'
+            >
+              <X className='w-5 h-5 text-gray-600' />
+            </button>
+
+            <h2 className='text-2xl font-bold mb-4 pr-10'>매장 목록</h2>
+            <p className='text-sm text-gray-500 mb-4'>총 {shops.length}개의 매장</p>
+
+            <div className='space-y-3'>
+              {itemsWithAds.map((item, index) => {
+                // 광고 블록
+                if (item === 'ad') {
+                  return (
+                    <div
+                      key={`ad-${index}`}
+                      className='bg-gray-50 border border-gray-200 rounded-lg p-4 text-center'
+                    >
+                      <GoogleAd slot='6852499093' />
+                    </div>
+                  );
+                }
+
+                // 가게 리스트 아이템
+                const shopItem = item as Shop;
+                return (
+                  <button
+                    key={shopItem.id}
+                    onClick={() => handleShopClick(shopItem)}
+                    className='w-full bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow-md transition-all text-left'
+                  >
+                    <div className='flex items-start gap-3'>
+                      {/* 썸네일 이미지 */}
+                      {shopItem.images && shopItem.images.length > 0 ? (
+                        <Image
+                          src={shopItem.images[0]}
+                          alt={shopItem.name}
+                          className='w-20 h-20 rounded-lg object-cover flex-shrink-0'
+                          sizes='100vw'
+                          width={200}
+                          height={200}
+                          priority
+                        />
+                      ) : (
+                        <div className='w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0'>
+                          <MapPin className='w-8 h-8 text-gray-400' />
+                        </div>
+                      )}
+
+                      {/* 가게 정보 */}
+                      <div className='flex-1 min-w-0'>
+                        <h3 className='font-bold text-lg mb-1 truncate'>{shopItem.name}</h3>
+                        <p className='text-sm text-gray-600 mb-2 truncate'>
+                          {shopItem.address_full}
+                        </p>
+
+                        {/* 카테고리 태그 */}
+                        <div className='flex flex-wrap gap-1'>
+                          {shopItem.categories?.slice(0, 3).map((cat, idx) => (
+                            <span
+                              key={idx}
+                              className='px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full'
+                            >
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* 상세 모드 */}
+        {mode === 'detail' && shop && (
+          <>
+            {/* ⭐️ 뒤로가기 버튼 (리스트에서 온 경우에만 표시) */}
+            {onBackToList && (
+              <button
+                onClick={onBackToList}
+                className='absolute top-4 left-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 z-10 flex items-center gap-1'
+                aria-label='리스트로 돌아가기'
+              >
+                <ArrowLeft className='w-5 h-5 text-gray-600' />
+                <span className='text-sm font-medium text-gray-600 pr-1'>목록</span>
+              </button>
+            )}
+
             {/* 닫기 버튼 */}
             <button
               onClick={handleClose}
@@ -70,39 +209,35 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
               <X className='w-5 h-5 text-gray-600' />
             </button>
 
-            {/* 이미지 갤러리 (이미지가 있을 때만 표시) */}
+            {/* 이미지 갤러리 */}
             {hasImages && (
-              <div className='relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gray-100'>
+              <div className='relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gray-100 mt-12'>
                 <Image
                   src={shop.images![currentImageIndex]}
                   alt={`${shop.name} - ${currentImageIndex + 1}`}
-                  fill
-                  className='object-cover'
+                  className='w-full h-full object-cover'
                   sizes='100vw'
+                  width={500}
+                  height={500}
+                  priority
                 />
 
-                {/* 이미지가 2개 이상일 때만 네비게이션 버튼 표시 */}
                 {shop.images!.length > 1 && (
                   <>
-                    {/* 이전 버튼 */}
                     <button
                       onClick={prevImage}
                       className='absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors'
-                      aria-label='이전 이미지'
                     >
                       <ChevronLeft className='w-6 h-6' />
                     </button>
 
-                    {/* 다음 버튼 */}
                     <button
                       onClick={nextImage}
                       className='absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors'
-                      aria-label='다음 이미지'
                     >
                       <ChevronRight className='w-6 h-6' />
                     </button>
 
-                    {/* 이미지 인디케이터 */}
                     <div className='absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5'>
                       {shop.images!.map((_, index) => (
                         <button
@@ -113,7 +248,6 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
                               ? 'bg-white w-6'
                               : 'bg-white/50 hover:bg-white/80'
                           }`}
-                          aria-label={`이미지 ${index + 1}로 이동`}
                         />
                       ))}
                     </div>
@@ -122,11 +256,11 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
               </div>
             )}
 
-            {/* 가게 이름 및 기본 정보 */}
-            <h2 className='text-2xl font-bold mb-1 pr-10'>{shop.name}</h2>
+            <h2 className={`text-2xl font-bold mb-1 ${onBackToList ? 'mt-12' : 'mt-0'} pr-10`}>
+              {shop.name}
+            </h2>
             <p className='text-sm text-gray-500 mb-4'>{shop.address_full}</p>
 
-            {/* 카테고리 태그 */}
             <div className='flex flex-wrap gap-2 mb-4'>
               {shop.categories?.map((cat, index) => (
                 <span
@@ -139,7 +273,6 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
             </div>
 
             <div className='space-y-3 text-sm text-gray-700 border-t pt-4'>
-              {/* 전화번호 */}
               {shop.phone && (
                 <div className='flex items-center space-x-2'>
                   <span className='font-semibold w-20'>전화번호</span>
@@ -149,7 +282,6 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
                 </div>
               )}
 
-              {/* 영업시간 */}
               {shop.business_hours && (
                 <div className='flex items-start space-x-2'>
                   <span className='font-semibold w-20'>영업시간</span>
@@ -157,7 +289,6 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
                 </div>
               )}
 
-              {/* 상세 주소 */}
               {shop.address_detail && (
                 <div className='flex items-start space-x-2'>
                   <span className='font-semibold w-20'>상세 주소</span>
@@ -165,7 +296,6 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
                 </div>
               )}
 
-              {/* 웹사이트/SNS */}
               {shop.homepage && (
                 <div className='flex items-center space-x-2'>
                   <span className='font-semibold w-20'>웹사이트</span>
@@ -186,10 +316,7 @@ export default function BottomSheet({ shop, onClose }: BottomSheetProps) {
               )}
             </div>
 
-            {/* 리뷰 작성 폼 (로그인 시에만 표시) */}
             <ReviewForm shopId={shop.id} />
-
-            {/* 신고 폼 */}
             <ReportForm shopId={shop.id} />
 
             <p className='mt-6 text-xs text-right text-gray-400'>
