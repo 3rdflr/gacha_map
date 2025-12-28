@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import KakaoMap from '@/components/Map';
 // import GoogleAd from '@/components/GoogleAd';
 
-// 서버 컴포넌트이므로 async 사용 가능
 export default async function Home() {
   const shops = await getVerifiedShops();
 
