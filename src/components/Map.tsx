@@ -2,7 +2,7 @@
 
 import { Map, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
 import { Shop } from '@/types/db';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import BottomSheet from './BottomSheet';
 import ShopSuggestionModal from './ShopSuggestionModal';
 import { Plus } from 'lucide-react';
@@ -22,6 +22,29 @@ export default function KakaoMap({ shops }: MapProps) {
   const [sheetMode, setSheetMode] = useState<'detail' | 'list'>('detail');
   const [isFromList, setIsFromList] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+  // 카카오맵 스크립트 로드
+  useEffect(() => {
+    const script = document.querySelector('script[src*="dapi.kakao.com"]');
+
+    if (script) {
+      // 스크립트가 이미 있으면 로드 확인
+      if (window.kakao && window.kakao.maps) {
+        window.kakao.maps.load(() => {
+          setIsMapLoaded(true);
+        });
+      } else {
+        script.addEventListener('load', () => {
+          if (window.kakao && window.kakao.maps) {
+            window.kakao.maps.load(() => {
+              setIsMapLoaded(true);
+            });
+          }
+        });
+      }
+    }
+  }, []);
 
   // 카테고리 필터링
   const filteredShops = useMemo(() => {
@@ -73,7 +96,7 @@ export default function KakaoMap({ shops }: MapProps) {
   const handleMarkerClick = (shop: Shop) => {
     setSelectedShop(shop);
     setSheetMode('detail');
-    setIsFromList(false); // ⭐️ 마커에서 직접 온 경우
+    setIsFromList(false);
   };
 
   // 리스트 버튼 클릭
@@ -94,12 +117,11 @@ export default function KakaoMap({ shops }: MapProps) {
   const handleShopSelectFromList = (shop: Shop) => {
     setSelectedShop(shop);
     setSheetMode('detail');
-    setIsFromList(true); // ⭐️ 리스트에서 온 경우
-    // 지도 중심 이동
+    setIsFromList(true);
     setCenter({ lat: shop.latitude, lng: shop.longitude });
   };
 
-  // ⭐️ 리스트로 돌아가기
+  // 리스트로 돌아가기
   const handleBackToList = () => {
     setSelectedShop(null);
     setSheetMode('list');
@@ -108,8 +130,39 @@ export default function KakaoMap({ shops }: MapProps) {
 
   // 새 가게 추천 버튼
   const handleSuggestShop = () => {
-    setIsSuggestionModalOpen(true); // ⭐️ 모달 열기
+    setIsSuggestionModalOpen(true);
   };
+
+  // 맵이 로드되지 않았으면 로딩 표시
+  if (!isMapLoaded) {
+    return (
+      <div className='relative w-full h-[80vh] rounded-2xl mb-10 flex items-center justify-center bg-gray-100'>
+        <div className='text-center'>
+          <svg
+            className='animate-spin h-12 w-12 text-blue-600 mx-auto mb-4'
+            xmlns='http://www.w3.org/2000/svg'
+            fill='none'
+            viewBox='0 0 24 24'
+          >
+            <circle
+              className='opacity-25'
+              cx='12'
+              cy='12'
+              r='10'
+              stroke='currentColor'
+              strokeWidth='4'
+            ></circle>
+            <path
+              className='opacity-75'
+              fill='currentColor'
+              d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+            ></path>
+          </svg>
+          <p className='text-gray-600 font-medium'>지도를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='relative w-full h-[80vh] rounded-2xl mb-10'>
@@ -234,7 +287,7 @@ export default function KakaoMap({ shops }: MapProps) {
         shops={filteredShops}
         onClose={handleCloseSheet}
         onShopSelect={handleShopSelectFromList}
-        onBackToList={isFromList ? handleBackToList : undefined} // ⭐️ 리스트에서 온 경우에만 뒤로가기 표시
+        onBackToList={isFromList ? handleBackToList : undefined}
       />
 
       {/* 새 가게 추천 모달 */}
