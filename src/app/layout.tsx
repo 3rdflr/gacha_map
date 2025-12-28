@@ -98,6 +98,21 @@ export default function RootLayout({
   return (
     <html lang='ko'>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: '국내 가챠 지도',
+              url: 'https://gachamap.vercel.app/',
+              description: '전국 가챠, 캡슐토이, 제일복권 매장 위치 정보 서비스',
+              applicationCategory: 'Maps',
+              genre: 'Animation Goods',
+              browserRequirements: 'requires HTML5 support',
+            }),
+          }}
+        />
         <Script src={API} strategy='beforeInteractive' />
         <Script
           async
