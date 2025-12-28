@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
-// window 객체에 adsbygoogle이 있음을 알리는 타입 선언
 declare global {
   interface Window {
     adsbygoogle: unknown[] | undefined;
@@ -19,16 +18,6 @@ interface GoogleAdProps {
 
 const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
-export function loadAds() {
-  if (typeof window !== 'undefined') {
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (err) {
-      console.error('AdSense 로드 실패:', err);
-    }
-  }
-}
-
 export default function GoogleAd({
   slot,
   format = 'auto',
@@ -36,19 +25,31 @@ export default function GoogleAd({
   className = '',
   style = { display: 'block' },
 }: GoogleAdProps) {
+  const adRef = useRef<HTMLModElement>(null);
+  const isAdPushed = useRef(false);
+
   useEffect(() => {
-    // 광고 스크립트가 로드되었는지 확인하고 광고를 로드
+    // 이미 광고가 로드되었거나, ref가 없으면 실행하지 않음
+    if (isAdPushed.current || !adRef.current) return;
+
     try {
-      if (window.adsbygoogle) {
-        window.adsbygoogle.push({});
+      // ins 요소가 비어있는지 확인
+      const insElement = adRef.current;
+      if (insElement && insElement.innerHTML.trim() === '') {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        isAdPushed.current = true;
       }
     } catch (e) {
       console.error('AdSense load error:', e);
     }
-  }, []); // 컴포넌트 마운트 시 한 번 실행
+
+    // cleanup 함수에서 ref 초기화
+    return () => {
+      isAdPushed.current = false;
+    };
+  }, []);
 
   if (!PUBLISHER_ID) {
-    // 개발 환경 등에서 ID가 없는 경우 광고 표시 안 함
     return (
       <div className='text-center py-4 bg-gray-100 text-sm text-gray-500'>광고 ID 설정 필요</div>
     );
@@ -57,6 +58,7 @@ export default function GoogleAd({
   return (
     <div className={`my-4 ${className}`} style={{ minHeight: '100px' }}>
       <ins
+        ref={adRef}
         className='adsbygoogle'
         style={style}
         data-ad-client={PUBLISHER_ID}
