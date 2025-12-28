@@ -1,0 +1,12 @@
+import { MetadataRoute } from 'next';
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: '/private/', // 노출되지 않아야 할 관리자 페이지 등
+    },
+    sitemap: 'https://gachamap.vercel.app/sitemap.xml',
+  };
+}
