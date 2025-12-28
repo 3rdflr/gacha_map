@@ -51,13 +51,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  // 파비콘
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
     apple: '/favicon.ico',
   },
-  // 오픈 그래프
   openGraph: {
     title: '국내 가챠 지도',
     description: '가챠, 캡슐토이, 제일복권 전문! 다양한 애니 굿즈 정보를 확인하세요.',
@@ -97,6 +95,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='ko'>
+      <head>
+        {/* 카카오맵 스크립트를 head에 배치 */}
+        <Script src={API} strategy='beforeInteractive' />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script
           type='application/ld+json'
@@ -113,10 +115,10 @@ export default function RootLayout({
             }),
           }}
         />
-        <Script src={API} strategy='afterInteractive' />
         <Script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
+          strategy='afterInteractive'
           crossOrigin='anonymous'
         />
         <AuthProvider>

@@ -24,26 +24,43 @@ export default function KakaoMap({ shops }: MapProps) {
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  // 카카오맵 스크립트 로드
+  // 카카오맵 스크립트 로드 - 더 안정적인 방법
   useEffect(() => {
-    const script = document.querySelector('script[src*="dapi.kakao.com"]');
-
-    if (script) {
-      // 스크립트가 이미 있으면 로드 확인
+    const loadKakaoMap = () => {
       if (window.kakao && window.kakao.maps) {
+        // 이미 로드된 경우
         window.kakao.maps.load(() => {
+          console.log('카카오맵 로드 완료');
           setIsMapLoaded(true);
         });
       } else {
-        script.addEventListener('load', () => {
+        // 로드되지 않은 경우 재시도
+        const checkInterval = setInterval(() => {
           if (window.kakao && window.kakao.maps) {
+            clearInterval(checkInterval);
             window.kakao.maps.load(() => {
+              console.log('카카오맵 로드 완료 (재시도)');
               setIsMapLoaded(true);
             });
           }
-        });
+        }, 100);
+
+        // 5초 후에도 로드 안되면 정리
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          if (!window.kakao || !window.kakao.maps) {
+            console.error('카카오맵 로드 실패');
+            // 그래도 시도해보기
+            setIsMapLoaded(true);
+          }
+        }, 5000);
       }
-    }
+    };
+
+    // 약간의 딜레이 후 실행
+    const timer = setTimeout(loadKakaoMap, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // 카테고리 필터링
@@ -169,6 +186,19 @@ export default function KakaoMap({ shops }: MapProps) {
       {/* 카테고리 필터 */}
       <div className='absolute top-4 left-0 right-0 z-10 px-4'>
         <div className='flex gap-2 overflow-x-auto pb-2 scrollbar-hide'>
+          <button
+            onClick={() => setSelectedCategory('전체')}
+            className={`
+              px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap shadow-md transition-colors
+              ${
+                selectedCategory === '전체'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }
+            `}
+          >
+            전체
+          </button>
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
