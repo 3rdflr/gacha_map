@@ -10,7 +10,17 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '*.pstatic.net',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'ldb-phinf.pstatic.net',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pup-review-phinf.pstatic.net',
         pathname: '/**',
       },
       {
