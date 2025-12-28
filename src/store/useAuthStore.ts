@@ -27,13 +27,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // 프로필 데이터 로드
   loadProfile: async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('nickname, avatar_url')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('nickname, avatar_url')
+        .eq('id', userId)
+        .single();
 
-    set({ profile: data || null });
+      if (error) {
+        // 데이터가 없는 경우(신규 유저 등) 에러가 발생할 수 있음
+        console.warn('프로필을 찾을 수 없습니다:', error.message);
+        set({ profile: null });
+      } else {
+        set({ profile: data });
+      }
+    } catch (err) {
+      console.error('프로필 로드 중 예상치 못한 에러:', err);
+    }
   },
 
   initialize: async () => {
