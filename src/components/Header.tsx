@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -9,12 +9,8 @@ import UserProfileModal from './UserProfileModal';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function Header() {
-  const { user, profile, isLoading, logout, loadProfile, initialize } = useAuthStore();
+  const { user, profile, isLoading, logout, loadProfile } = useAuthStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
 
   // 카카오 로그인 핸들러
   const handleLogin = async () => {
