@@ -4,37 +4,32 @@ import { Map, MapMarker, CustomOverlayMap } from 'react-kakao-maps-sdk';
 import { Shop } from '@/types/db';
 import { useState, useMemo } from 'react';
 import BottomSheet from './BottomSheet';
+import ShopSuggestionModal from './ShopSuggestionModal';
+import { Plus } from 'lucide-react';
 
 interface MapProps {
   shops: Shop[];
 }
 
-// 필터링할 카테고리 목록 정의
 const CATEGORIES = ['가챠', '쿠지', '굿즈'];
 
 export default function KakaoMap({ shops }: MapProps) {
-  // 초기 중심 좌표 (홍대 입구 근처)
   const [center, setCenter] = useState({ lat: 37.556, lng: 126.923 });
-
-  // 위치 로딩 상태
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-
-  // 현재 선택된 카테고리 상태
   const [selectedCategory, setSelectedCategory] = useState('전체');
-
-  // ⭐️ 선택된 가게 상태 추가 (null이면 시트 닫힘)
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-
-  // 현재 위치 상태 (위치를 찾았을 때만 표시)
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [sheetMode, setSheetMode] = useState<'detail' | 'list'>('detail');
+  const [isFromList, setIsFromList] = useState(false);
+  const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
 
-  // 카테고리에 따라 마커 필터링 (useMemo로 성능 최적화)
+  // 카테고리 필터링
   const filteredShops = useMemo(() => {
     if (selectedCategory === '전체') return shops;
     return shops.filter((shop) => shop.categories?.includes(selectedCategory));
   }, [shops, selectedCategory]);
 
-  // 현재 위치로 이동하는 함수
+  // 현재 위치로 이동
   const handleMoveToCurrentLocation = () => {
     if (!navigator.geolocation) {
       alert('이 브라우저는 위치 서비스를 지원하지 않습니다.');
@@ -47,9 +42,8 @@ export default function KakaoMap({ shops }: MapProps) {
       (position) => {
         const { latitude, longitude } = position.coords;
         setCenter({ lat: latitude, lng: longitude });
-        setCurrentLocation({ lat: latitude, lng: longitude }); // 현재 위치 저장
+        setCurrentLocation({ lat: latitude, lng: longitude });
         setIsLoadingLocation(false);
-        console.log('📍 현재 위치:', latitude, longitude);
       },
       (error) => {
         setIsLoadingLocation(false);
@@ -57,7 +51,7 @@ export default function KakaoMap({ shops }: MapProps) {
 
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            alert('위치 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
+            alert('위치 접근 권한이 거부되었습니다.');
             break;
           case error.POSITION_UNAVAILABLE:
             alert('위치 정보를 사용할 수 없습니다.');
@@ -68,21 +62,58 @@ export default function KakaoMap({ shops }: MapProps) {
         }
       },
       {
-        enableHighAccuracy: true, // 높은 정확도
-        timeout: 5000, // 5초 타임아웃
-        maximumAge: 0, // 캐시 사용 안 함
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
       },
     );
   };
 
-  // 바텀 시트 닫기 핸들러
+  // 마커 클릭 (상세보기 모드)
+  const handleMarkerClick = (shop: Shop) => {
+    setSelectedShop(shop);
+    setSheetMode('detail');
+    setIsFromList(false); // ⭐️ 마커에서 직접 온 경우
+  };
+
+  // 리스트 버튼 클릭
+  const handleListClick = () => {
+    setSheetMode('list');
+    setSelectedShop(null);
+    setIsFromList(false);
+  };
+
+  // 바텀시트 닫기
   const handleCloseSheet = () => {
     setSelectedShop(null);
+    setSheetMode('detail');
+    setIsFromList(false);
+  };
+
+  // 리스트에서 가게 선택 (상세보기로 전환)
+  const handleShopSelectFromList = (shop: Shop) => {
+    setSelectedShop(shop);
+    setSheetMode('detail');
+    setIsFromList(true); // ⭐️ 리스트에서 온 경우
+    // 지도 중심 이동
+    setCenter({ lat: shop.latitude, lng: shop.longitude });
+  };
+
+  // ⭐️ 리스트로 돌아가기
+  const handleBackToList = () => {
+    setSelectedShop(null);
+    setSheetMode('list');
+    setIsFromList(false);
+  };
+
+  // 새 가게 추천 버튼
+  const handleSuggestShop = () => {
+    setIsSuggestionModalOpen(true); // ⭐️ 모달 열기
   };
 
   return (
     <div className='relative w-full h-[80vh] rounded-2xl mb-10'>
-      {/* 카테고리 필터 (지도 위에 띄움) */}
+      {/* 카테고리 필터 */}
       <div className='absolute top-4 left-0 right-0 z-10 px-4'>
         <div className='flex gap-2 overflow-x-auto pb-2 scrollbar-hide'>
           {CATEGORIES.map((cat) => (
@@ -93,8 +124,8 @@ export default function KakaoMap({ shops }: MapProps) {
                 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap shadow-md transition-colors
                 ${
                   selectedCategory === cat
-                    ? 'bg-blue-600 text-white border-blue-600' // 선택됨
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50' // 선택 안됨
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                 }
               `}
             >
@@ -103,15 +134,15 @@ export default function KakaoMap({ shops }: MapProps) {
           ))}
         </div>
       </div>
+
       {/* 현재 위치 버튼 */}
       <button
         onClick={handleMoveToCurrentLocation}
         disabled={isLoadingLocation}
-        className='absolute top-20 right-4 z-10 bg-white p-3 rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+        className='absolute top-20 right-4 z-10 bg-white p-3 rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50'
         title='내 위치로 이동'
       >
         {isLoadingLocation ? (
-          // 로딩 스피너
           <svg
             className='animate-spin h-6 w-6 text-blue-600'
             xmlns='http://www.w3.org/2000/svg'
@@ -133,7 +164,6 @@ export default function KakaoMap({ shops }: MapProps) {
             ></path>
           </svg>
         ) : (
-          // 위치 아이콘
           <svg
             xmlns='http://www.w3.org/2000/svg'
             className='h-6 w-6 text-blue-600'
@@ -157,44 +187,63 @@ export default function KakaoMap({ shops }: MapProps) {
         )}
       </button>
 
+      {/* 새 가게 추천 버튼 */}
+      <button
+        onClick={handleSuggestShop}
+        className='absolute top-36 right-4 z-10 bg-green-500 hover:bg-green-600 text-white p-3 rounded-full shadow-lg transition-colors'
+        title='새 가게 추천하기'
+      >
+        <Plus className='w-6 h-6' />
+      </button>
+
       {/* 카카오맵 */}
       <Map center={center} style={{ width: '100%', height: '100%' }} level={3}>
-        {/* 일반 가게 마커들 - 깔끔한 원형 마커 */}
         {filteredShops.map((shop) => (
           <MapMarker
             key={shop.id}
             position={{ lat: shop.latitude, lng: shop.longitude }}
             title={shop.name}
-            onClick={() => setSelectedShop(shop)}
-          ></MapMarker>
+            onClick={() => handleMarkerClick(shop)}
+          />
         ))}
 
-        {/* 현재 위치 마커 - 빨간색 펄스 효과 */}
         {currentLocation && (
           <CustomOverlayMap position={currentLocation} yAnchor={0.5}>
-            {/* 컨테이너 자체를 중앙 정렬하기 위해 -translate-x-1/2 적용 */}
             <div className='relative flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 z-50'>
-              {/* 1. 퍼지는 핑 효과 (Absolute로 배경에 깔기) */}
               <span className='absolute inline-flex h-8 w-8 rounded-full bg-red-400 opacity-75 animate-ping'></span>
-
-              {/* 2. 중앙 고정 점 (Relative 또는 Absolute) */}
               <span className='relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white shadow-lg'></span>
             </div>
           </CustomOverlayMap>
         )}
       </Map>
 
-      {/* 결과 개수 표시 */}
-      <div className='absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10'>
-        <div className='bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-lg border border-gray-200'>
-          <span className='text-sm font-medium text-gray-800'>
-            {selectedCategory} <span className='text-blue-600'>{filteredShops.length}</span>개 발견
-          </span>
-        </div>
-      </div>
+      {/* 결과 개수 표시 (클릭 시 리스트 표시) */}
+      <button
+        onClick={handleListClick}
+        className='absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-lg border border-gray-200 hover:bg-white hover:shadow-xl transition-all'
+      >
+        <span className='text-sm font-medium text-gray-800'>
+          {selectedCategory} <span className='text-blue-600'>{filteredShops.length}</span>개 발견 →
+        </span>
+      </button>
 
-      {/* 바텀 시트 렌더링 */}
-      <BottomSheet shop={selectedShop} onClose={handleCloseSheet} />
+      {/* 바텀 시트 */}
+      <BottomSheet
+        mode={sheetMode}
+        shop={selectedShop}
+        shops={filteredShops}
+        onClose={handleCloseSheet}
+        onShopSelect={handleShopSelectFromList}
+        onBackToList={isFromList ? handleBackToList : undefined} // ⭐️ 리스트에서 온 경우에만 뒤로가기 표시
+      />
+
+      {/* 새 가게 추천 모달 */}
+      {isSuggestionModalOpen && (
+        <ShopSuggestionModal
+          isOpen={isSuggestionModalOpen}
+          onClose={() => setIsSuggestionModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
