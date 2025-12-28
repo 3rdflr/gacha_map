@@ -2,9 +2,9 @@ import ReviewForm from '@/components/ReviewForm';
 import ReportForm from '@/components/ReportForm';
 import Image from 'next/image';
 import { Shop } from '@/types/db';
-import GoogleAd, { loadAds } from '@/components/GoogleAd';
+import GoogleAd from '@/components/GoogleAd';
 import { X, ChevronLeft, ChevronRight, ArrowLeft, MapPin } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 interface BottomSheetProps {
   mode: 'detail' | 'list';
@@ -12,7 +12,7 @@ interface BottomSheetProps {
   shops: Shop[];
   onClose: () => void;
   onShopSelect?: (shop: Shop) => void;
-  onBackToList?: () => void; // ⭐️ 리스트로 돌아가기 콜백
+  onBackToList?: () => void;
 }
 
 export default function BottomSheet({
@@ -26,61 +26,47 @@ export default function BottomSheet({
   const isOpen = mode === 'detail' ? !!shop : shops.length > 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // 이미지가 있는지 확인
   const hasImages = shop?.images && Array.isArray(shop.images) && shop.images.length > 0;
 
-  // 다음 이미지로 이동
   const nextImage = () => {
     if (hasImages && shop) {
       setCurrentImageIndex((prev) => (prev + 1) % shop.images!.length);
     }
   };
 
-  // 이전 이미지로 이동
   const prevImage = () => {
     if (hasImages && shop) {
       setCurrentImageIndex((prev) => (prev - 1 + shop.images!.length) % shop.images!.length);
     }
   };
 
-  // 시트가 닫힐 때 이미지 인덱스 초기화
   const handleClose = () => {
     setCurrentImageIndex(0);
     onClose();
   };
 
-  // 리스트에서 가게 선택
   const handleShopClick = (selectedShop: Shop) => {
     if (onShopSelect) {
       onShopSelect(selectedShop);
     }
   };
 
-  // ⭐️ 광고가 삽입된 리스트를 useMemo로 메모이제이션
+  // 광고가 삽입된 리스트 (광고마다 고유 키 생성)
   const itemsWithAds = useMemo(() => {
     if (mode !== 'list') return [];
 
-    const result: (Shop | 'ad')[] = [];
+    const result: (Shop | { type: 'ad'; id: string })[] = [];
+    let adCounter = 0;
+
     shops.forEach((shop, index) => {
       result.push(shop);
-      // 10개마다 광고 삽입
+      // 10개마다 광고 삽입 (고유 ID 부여)
       if ((index + 1) % 10 === 0 && index !== shops.length - 1) {
-        result.push('ad');
+        result.push({ type: 'ad', id: `ad-${adCounter++}` });
       }
     });
     return result;
-  }, [mode, shops]); // shops 배열이 변경될 때만 재계산
-
-  // 광고 로드
-  useEffect(() => {
-    if (mode === 'list' && isOpen) {
-      // 약간의 딜레이를 주어 DOM이 렌더링된 후 광고 로드
-      const timer = setTimeout(() => {
-        loadAds();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [mode, isOpen]);
+  }, [mode, shops]);
 
   return (
     <div
@@ -119,12 +105,12 @@ export default function BottomSheet({
             <p className='text-sm text-gray-500 mb-4'>총 {shops.length}개의 매장</p>
 
             <div className='space-y-3'>
-              {itemsWithAds.map((item, index) => {
-                // 광고 블록
-                if (item === 'ad') {
+              {itemsWithAds.map((item) => {
+                // 광고 블록 (고유 키로 렌더링)
+                if ('type' in item && item.type === 'ad') {
                   return (
                     <div
-                      key={`ad-${index}`}
+                      key={item.id}
                       className='bg-gray-50 border border-gray-200 rounded-lg p-4 text-center'
                     >
                       <GoogleAd slot='6852499093' />
@@ -141,7 +127,6 @@ export default function BottomSheet({
                     className='w-full bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow-md transition-all text-left'
                   >
                     <div className='flex items-start gap-3'>
-                      {/* 썸네일 이미지 */}
                       {shopItem.images && shopItem.images.length > 0 ? (
                         <Image
                           src={shopItem.images[0]}
@@ -158,14 +143,12 @@ export default function BottomSheet({
                         </div>
                       )}
 
-                      {/* 가게 정보 */}
                       <div className='flex-1 min-w-0'>
                         <h3 className='font-bold text-lg mb-1 truncate'>{shopItem.name}</h3>
                         <p className='text-sm text-gray-600 mb-2 truncate'>
                           {shopItem.address_full}
                         </p>
 
-                        {/* 카테고리 태그 */}
                         <div className='flex flex-wrap gap-1'>
                           {shopItem.categories?.slice(0, 3).map((cat, idx) => (
                             <span
@@ -188,7 +171,6 @@ export default function BottomSheet({
         {/* 상세 모드 */}
         {mode === 'detail' && shop && (
           <>
-            {/* ⭐️ 뒤로가기 버튼 (리스트에서 온 경우에만 표시) */}
             {onBackToList && (
               <button
                 onClick={onBackToList}
@@ -200,7 +182,6 @@ export default function BottomSheet({
               </button>
             )}
 
-            {/* 닫기 버튼 */}
             <button
               onClick={handleClose}
               className='absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 z-10'
@@ -209,7 +190,6 @@ export default function BottomSheet({
               <X className='w-5 h-5 text-gray-600' />
             </button>
 
-            {/* 이미지 갤러리 */}
             {hasImages && (
               <div className='relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gray-100 mt-12'>
                 <Image
