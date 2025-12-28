@@ -19,6 +19,16 @@ interface GoogleAdProps {
 
 const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
+export function loadAds() {
+  if (typeof window !== 'undefined') {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (err) {
+      console.error('AdSense 로드 실패:', err);
+    }
+  }
+}
+
 export default function GoogleAd({
   slot,
   format = 'auto',
