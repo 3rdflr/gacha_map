@@ -5,7 +5,12 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Star, Send } from 'lucide-react';
 
-export default function ReviewForm({ shopId }: { shopId: number }) {
+interface ReviewFormProps {
+  shopId: number;
+  onReviewSubmitted?: () => void; // 리뷰 등록 성공 시 콜백
+}
+
+export default function ReviewForm({ shopId, onReviewSubmitted }: ReviewFormProps) {
   const user = useAuthStore((state) => state.user);
   const [rating, setRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -47,6 +52,11 @@ export default function ReviewForm({ shopId }: { shopId: number }) {
       alert('리뷰가 등록되었습니다!');
       setContent('');
       setRating(5);
+
+      // 리뷰 등록 성공 시 부모 컴포넌트에 알림
+      if (onReviewSubmitted) {
+        onReviewSubmitted();
+      }
     }
   };
 
