@@ -1,5 +1,4 @@
 import { Shop } from '@/types/db';
-import GoogleAd from '@/components/GoogleAd';
 import ShopListItem from '@/components/ShopListItem';
 import { X, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -24,21 +23,6 @@ export default function ShopListView({ shops, onClose, onShopSelect }: ShopListV
       return nameMatch || addressMatch;
     });
   }, [shops, searchQuery]);
-
-  // 광고가 삽입된 리스트
-  const itemsWithAds = useMemo(() => {
-    const result: (Shop | { type: 'ad'; id: string })[] = [];
-    let adCounter = 0;
-
-    filteredShops.forEach((shop, index) => {
-      result.push(shop);
-      // 10개마다 광고 삽입
-      if ((index + 1) % 10 === 0 && index !== filteredShops.length - 1) {
-        result.push({ type: 'ad', id: `ad-${adCounter++}` });
-      }
-    });
-    return result;
-  }, [filteredShops]);
 
   return (
     <>
@@ -93,26 +77,12 @@ export default function ShopListView({ shops, onClose, onShopSelect }: ShopListV
         </div>
       )}
 
-      {/* 매장 리스트 */}
+      {/* 매장 리스트 (광고 제거됨) */}
       {filteredShops.length > 0 && (
         <div className='space-y-3'>
-          {itemsWithAds.map((item) => {
-            // 광고 블록
-            if ('type' in item && item.type === 'ad') {
-              return (
-                <div
-                  key={item.id}
-                  className='bg-gray-50 border border-gray-200 rounded-lg p-4 text-center'
-                >
-                  <GoogleAd slot='6852499093' />
-                </div>
-              );
-            }
-
-            // 가게 리스트 아이템
-            const shopItem = item as Shop;
-            return <ShopListItem key={shopItem.id} shop={shopItem} onClick={onShopSelect} />;
-          })}
+          {filteredShops.map((shop) => (
+            <ShopListItem key={shop.id} shop={shop} onClick={onShopSelect} />
+          ))}
         </div>
       )}
     </>
