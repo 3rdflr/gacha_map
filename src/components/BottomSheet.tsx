@@ -50,7 +50,7 @@ export default function BottomSheet({
       <div
         className={`absolute bottom-0 w-full bg-white rounded-t-xl shadow-2xl transition-transform duration-300 p-4
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}
-          max-h-[90vh] overflow-y-auto
+          h-[90vh] overflow-y-auto
         `}
       >
         {/* 리스트 모드 */}
