@@ -1,12 +1,17 @@
-import { MetadataRoute } from 'next';
+import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: '/private/', // 노출되지 않아야 할 관리자 페이지 등
-    },
-    sitemap: 'https://gachamap.vercel.app/sitemap.xml',
-  };
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+      },
+      {
+        userAgent: 'Yeti',
+        allow: '/',
+      },
+    ],
+    sitemap: 'https://gachamap.vercel.app/sitemap.xml', // 본인 도메인으로 변경
+  }
 }
