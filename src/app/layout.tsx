@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import Script from 'next/script';
 import localFont from 'next/font/local';
 import AuthProvider from '@/components/AuthProvider';
@@ -28,6 +30,13 @@ export const metadata: Metadata = {
     '가챠폰',
     '가챠샵',
     '가챠 샵',
+    '홍대 가챠샵',
+    '홍대 가챠',
+    '가챠 파는곳',
+    '가챠샵 위치',
+    '가챠 위치',
+    '신상 가챠',
+    '신상 가챠샵',
     '가챠지도',
     '가챠 지도',
     '가챠 지도 서비스',
@@ -127,6 +136,8 @@ export default function RootLayout({
           strategy='afterInteractive'
           crossOrigin='anonymous'
         />
+        <Analytics />
+        <SpeedInsights />
         <AuthProvider>
           <Notice />
           {children}
