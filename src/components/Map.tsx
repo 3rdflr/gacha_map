@@ -11,7 +11,16 @@ interface MapProps {
   shops: Shop[];
 }
 
+interface Cluster {
+  id: string;
+  lat: number;
+  lng: number;
+  shops: Shop[];
+}
+
 const CATEGORIES = ['가챠', '쿠지', '굿즈'];
+const CLUSTER_RADIUS = 60; // 클러스터링 반경 (픽셀)
+const CLUSTER_MIN_LEVEL = 5; // 이 레벨 이상에서 클러스터링 활성화
 
 export default function KakaoMap({ shops }: MapProps) {
   const [center, setCenter] = useState({ lat: 37.556, lng: 126.923 });
@@ -23,18 +32,18 @@ export default function KakaoMap({ shops }: MapProps) {
   const [isFromList, setIsFromList] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapLevel, setMapLevel] = useState(3);
+  const [mapInstance, setMapInstance] = useState<kakao.maps.Map | null>(null);
 
-  // 카카오맵 스크립트 로드 - 더 안정적인 방법
+  // 카카오맵 스크립트 로드
   useEffect(() => {
     const loadKakaoMap = () => {
       if (window.kakao && window.kakao.maps) {
-        // 이미 로드된 경우
         window.kakao.maps.load(() => {
           console.log('카카오맵 로드 완료');
           setIsMapLoaded(true);
         });
       } else {
-        // 로드되지 않은 경우 재시도
         const checkInterval = setInterval(() => {
           if (window.kakao && window.kakao.maps) {
             clearInterval(checkInterval);
@@ -45,21 +54,17 @@ export default function KakaoMap({ shops }: MapProps) {
           }
         }, 100);
 
-        // 5초 후에도 로드 안되면 정리
         setTimeout(() => {
           clearInterval(checkInterval);
           if (!window.kakao || !window.kakao.maps) {
             console.error('카카오맵 로드 실패');
-            // 그래도 시도해보기
             setIsMapLoaded(true);
           }
         }, 5000);
       }
     };
 
-    // 약간의 딜레이 후 실행
     const timer = setTimeout(loadKakaoMap, 100);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -68,6 +73,67 @@ export default function KakaoMap({ shops }: MapProps) {
     if (selectedCategory === '전체') return shops;
     return shops.filter((shop) => shop.categories?.includes(selectedCategory));
   }, [shops, selectedCategory]);
+
+  // 마커 클러스터링 로직
+  const clusteredData = useMemo(() => {
+    // 줌 레벨이 낮으면 (확대되어 있으면) 클러스터링 안함
+    if (mapLevel < CLUSTER_MIN_LEVEL || !mapInstance) {
+      return { clusters: [], markers: filteredShops };
+    }
+
+    const clusters: Cluster[] = [];
+    const processed = new Set<number>();
+
+    filteredShops.forEach((shop, index) => {
+      if (processed.has(index)) return;
+
+      // 현재 가게의 화면 좌표 계산
+      const projection = mapInstance.getProjection();
+      const point1 = projection.pointFromCoords(
+        new window.kakao.maps.LatLng(shop.latitude, shop.longitude),
+      );
+
+      // 근처 가게들 찾기
+      const nearbyShops = [shop];
+      processed.add(index);
+
+      filteredShops.forEach((otherShop, otherIndex) => {
+        if (processed.has(otherIndex) || index === otherIndex) return;
+
+        const point2 = projection.pointFromCoords(
+          new window.kakao.maps.LatLng(otherShop.latitude, otherShop.longitude),
+        );
+
+        // 픽셀 거리 계산
+        const distance = Math.sqrt(
+          Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2),
+        );
+
+        if (distance < CLUSTER_RADIUS) {
+          nearbyShops.push(otherShop);
+          processed.add(otherIndex);
+        }
+      });
+
+      // 2개 이상이면 클러스터로
+      if (nearbyShops.length > 1) {
+        const avgLat = nearbyShops.reduce((sum, s) => sum + s.latitude, 0) / nearbyShops.length;
+        const avgLng = nearbyShops.reduce((sum, s) => sum + s.longitude, 0) / nearbyShops.length;
+
+        clusters.push({
+          id: `cluster-${index}`,
+          lat: avgLat,
+          lng: avgLng,
+          shops: nearbyShops,
+        });
+      }
+    });
+
+    // 클러스터되지 않은 개별 마커들
+    const markers = filteredShops.filter((_, index) => !processed.has(index));
+
+    return { clusters, markers };
+  }, [filteredShops, mapLevel, mapInstance]);
 
   // 현재 위치로 이동
   const handleMoveToCurrentLocation = () => {
@@ -116,6 +182,22 @@ export default function KakaoMap({ shops }: MapProps) {
     setIsFromList(false);
   };
 
+  // 클러스터 클릭 (확대 또는 리스트 표시)
+  const handleClusterClick = (cluster: Cluster) => {
+    if (mapLevel <= 6) {
+      // 충분히 확대되었으면 해당 가게들 리스트 표시
+      setSheetMode('list');
+      setSelectedShop(null);
+      setIsFromList(false);
+    } else {
+      // 더 확대
+      setCenter({ lat: cluster.lat, lng: cluster.lng });
+      if (mapInstance) {
+        mapInstance.setLevel(mapLevel - 2);
+      }
+    }
+  };
+
   // 리스트 버튼 클릭
   const handleListClick = () => {
     setSheetMode('list');
@@ -130,7 +212,7 @@ export default function KakaoMap({ shops }: MapProps) {
     setIsFromList(false);
   };
 
-  // 리스트에서 가게 선택 (상세보기로 전환)
+  // 리스트에서 가게 선택
   const handleShopSelectFromList = (shop: Shop) => {
     setSelectedShop(shop);
     setSheetMode('detail');
@@ -145,12 +227,11 @@ export default function KakaoMap({ shops }: MapProps) {
     setIsFromList(false);
   };
 
-  // 새 가게 추천 버튼
+  // 새 가게 추천
   const handleSuggestShop = () => {
     setIsSuggestionModalOpen(true);
   };
 
-  // 맵이 로드되지 않았으면 로딩 표시
   if (!isMapLoaded) {
     return (
       <div className='relative w-full h-[80vh] rounded-2xl flex items-center justify-center bg-gray-100'>
@@ -280,8 +361,15 @@ export default function KakaoMap({ shops }: MapProps) {
       </button>
 
       {/* 카카오맵 */}
-      <Map center={center} style={{ width: '100%', height: '100%' }} level={3}>
-        {filteredShops.map((shop) => (
+      <Map
+        center={center}
+        style={{ width: '100%', height: '100%' }}
+        level={3}
+        onCreate={(map) => setMapInstance(map)}
+        onZoomChanged={(map) => setMapLevel(map.getLevel())}
+      >
+        {/* 개별 마커 */}
+        {clusteredData.markers.map((shop) => (
           <MapMarker
             key={shop.id}
             position={{ lat: shop.latitude, lng: shop.longitude }}
@@ -290,6 +378,38 @@ export default function KakaoMap({ shops }: MapProps) {
           />
         ))}
 
+        {/* 클러스터 마커 */}
+        {clusteredData.clusters.map((cluster) => (
+          <CustomOverlayMap
+            key={cluster.id}
+            position={{ lat: cluster.lat, lng: cluster.lng }}
+            yAnchor={0.5}
+          >
+            <div
+              onClick={() => handleClusterClick(cluster)}
+              className='transform -translate-x-1/2 -translate-y-1/2 cursor-pointer hover:scale-110 transition-transform'
+            >
+              <div className='relative'>
+                {/* 클러스터 배경 */}
+                <div className='absolute inset-0 bg-blue-500 rounded-full blur-sm opacity-30 animate-pulse'></div>
+
+                {/* 클러스터 원 */}
+                <div
+                  className='relative bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full shadow-lg border-3 border-white flex items-center justify-center font-bold'
+                  style={{
+                    width: Math.min(60, 40 + Math.log(cluster.shops.length) * 8) + 'px',
+                    height: Math.min(60, 40 + Math.log(cluster.shops.length) * 8) + 'px',
+                    fontSize: cluster.shops.length > 99 ? '14px' : '16px',
+                  }}
+                >
+                  {cluster.shops.length}
+                </div>
+              </div>
+            </div>
+          </CustomOverlayMap>
+        ))}
+
+        {/* 현재 위치 마커 */}
         {currentLocation && (
           <CustomOverlayMap position={currentLocation} yAnchor={0.5}>
             <div className='relative flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 z-50'>
@@ -300,7 +420,7 @@ export default function KakaoMap({ shops }: MapProps) {
         )}
       </Map>
 
-      {/* 결과 개수 표시 (클릭 시 리스트 표시) */}
+      {/* 결과 개수 표시 */}
       <button
         onClick={handleListClick}
         className='absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-lg border border-gray-200 hover:bg-white hover:shadow-xl transition-all'
