@@ -153,7 +153,7 @@ export default function KakaoMap({ shops }: MapProps) {
   // 맵이 로드되지 않았으면 로딩 표시
   if (!isMapLoaded) {
     return (
-      <div className='relative w-full h-[80vh] rounded-2xl mb-10 flex items-center justify-center bg-gray-100'>
+      <div className='relative w-full h-[80vh] rounded-2xl flex items-center justify-center bg-gray-100'>
         <div className='text-center'>
           <svg
             className='animate-spin h-12 w-12 text-blue-600 mx-auto mb-4'
