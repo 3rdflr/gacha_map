@@ -279,9 +279,9 @@ export default function ShopDetailView({ shop, onClose, onBackToList }: ShopDeta
       <ReviewForm shopId={shop.id} onReviewSubmitted={fetchReviews} />
 
       {/* 구글 애드센스 광고 (리뷰와 신고 사이) */}
-      <div className='my-8 py-6 border-t border-b border-gray-200 bg-gray-50/50 rounded-lg'>
+      {/* <div className='my-8 py-6 border-t border-b border-gray-200 bg-gray-50/50 rounded-lg'>
         <GoogleAd slot='6852499093' />
-      </div>
+      </div> */}
 
       {/* 신고 폼 */}
       <ReportForm shopId={shop.id} />
