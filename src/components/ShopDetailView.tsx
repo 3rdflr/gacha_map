@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Shop } from '@/types/db';
-import GoogleAd from '@/components/GoogleAd';
+// import GoogleAd from '@/components/GoogleAd';
 import ReviewForm from '@/components/ReviewForm';
 import ReportForm from '@/components/ReportForm';
 import { ChevronLeft, ChevronRight, ArrowLeft, X, Star, User } from 'lucide-react';
