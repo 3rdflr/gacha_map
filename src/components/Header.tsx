@@ -35,7 +35,7 @@ export default function Header() {
         <div className='pointer-events-auto flex items-center justify-center'>
           <Image src={'/logo.png'} alt='가챠맵 로고' width={50} height={50} />
           <Link href='/' className='text-xl text-neutral-900 px-3 py-1'>
-            전국 가챠 지도 1.0v
+            전국 가챠 지도 1.01v
           </Link>
         </div>
 
