@@ -263,7 +263,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
                 required
               >
                 <option value='가챠'>가챠</option>
-                <option value='이치방쿠지'>이치방쿠지</option>
+                <option value='쿠지'>쿠지</option>
               </select>
             </div>
 

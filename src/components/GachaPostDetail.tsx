@@ -158,13 +158,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
                       🇰🇷 한국 쿠지
                     </span>
                   )}
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      post.brand === '가챠'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}
-                  >
+                  <span className='px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-600'>
                     {post.brand}
                   </span>
                   {post.series && (
