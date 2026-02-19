@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Eye, Plus } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface GachaPost {
   id: string;
@@ -180,6 +181,7 @@ export default function GachaBoardPage() {
                   <div className='relative aspect-square bg-gray-50 overflow-hidden'>
                     {post.thumbnail_url || post.image_url ? (
                       <Image
+                        loader={wsrvLoader}
                         src={post.thumbnail_url || post.image_url}
                         alt={post.title}
                         fill

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Shop } from '@/types/db';
 import { MapPin } from 'lucide-react';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface ShopListItemProps {
   shop: Shop;
@@ -17,6 +18,7 @@ export default function ShopListItem({ shop, onClick }: ShopListItemProps) {
         {/* 썸네일 이미지 */}
         {shop.images && shop.images.length > 0 ? (
           <Image
+            loader={wsrvLoader}
             src={shop.images[0]}
             alt={shop.name}
             className='w-20 h-20 rounded-lg object-cover flex-shrink-0'

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Calendar, Eye, Tag, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface GachaPost {
   id: string;
@@ -132,6 +133,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
           {post.image_url && (
             <div className='relative w-full h-96 bg-gradient-to-br from-blue-100 to-purple-100'>
               <Image
+                loader={wsrvLoader}
                 src={post.image_url}
                 alt={post.title}
                 fill

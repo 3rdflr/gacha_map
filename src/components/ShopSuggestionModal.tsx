@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/useAuthStore';
 import { X, Upload, Plus, Trash2, Store } from 'lucide-react';
 import Image from 'next/image';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface ShopSuggestionModalProps {
   isOpen: boolean;
@@ -234,10 +235,11 @@ export default function ShopSuggestionModal({ isOpen, onClose }: ShopSuggestionM
                     {/* 이미지 컨테이너 */}
                     <div className='relative w-12 h-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200 flex items-center justify-center'>
                       <Image
+                        loader={wsrvLoader}
                         src={url}
                         alt={`미리보기 ${index + 1}`}
-                        fill // 컨테이너 크기에 맞춤
-                        sizes='48px' // w-12(48px)임을 명시하여 최적화
+                        fill
+                        sizes='48px'
                         className='object-cover'
                         // 이미지 로드 실패 시 투명하게 처리 (부모의 아이콘이 보이게 됨)
                         onError={(e) => {

@@ -1,45 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    formats: ['image/avif', 'image/webp'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'search.pstatic.net',
-        pathname: '/common/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.pstatic.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'ldb-phinf.pstatic.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'pup-review-phinf.pstatic.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'k.kakaocdn.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'k.kakaocdn.net',
-        pathname: '/**',
-      },
-      // Supabase Storage (프로필 이미지용)
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
+    // wsrv.nl을 통해 이미지 최적화를 처리하므로 Vercel 자동 최적화 비활성화
+    unoptimized: true,
   },
 };
 

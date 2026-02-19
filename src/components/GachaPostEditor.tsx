@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Upload, X, Save, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface PostFormData {
   title: string;
@@ -25,6 +26,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
   const { user, profile } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
   const [formData, setFormData] = useState<PostFormData>({
     title: '',
     description: '',
@@ -90,29 +92,81 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 20MB 초과 시 Canvas로 압축
+  const compressImage = (file: File, targetSizeMB = 20): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        // 긴 변 기준 최대 3000px로 리사이즈
+        const MAX_PX = 3000;
+        if (width > MAX_PX || height > MAX_PX) {
+          if (width > height) {
+            height = Math.round((height * MAX_PX) / width);
+            width = MAX_PX;
+          } else {
+            width = Math.round((width * MAX_PX) / height);
+            height = MAX_PX;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+
+        // quality를 낮춰가며 목표 용량 이하로 맞춤
+        let quality = 0.9;
+        const tryCompress = () => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) return resolve(file);
+              if (blob.size <= targetSizeMB * 1024 * 1024 || quality <= 0.3) {
+                resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+              } else {
+                quality -= 0.1;
+                tryCompress();
+              }
+            },
+            'image/jpeg',
+            quality,
+          );
+        };
+        tryCompress();
+      };
+      img.src = url;
+    });
+  };
+
   // 이미지 업로드
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 파일 크기 체크 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('이미지 크기는 5MB 이하여야 합니다.');
-      return;
-    }
-
     setUploading(true);
 
     try {
+      let uploadFile = file;
+
+      // 20MB 초과 시 자동 압축
+      if (file.size > 20 * 1024 * 1024) {
+        setUploadStatus('이미지 압축 중...');
+        uploadFile = await compressImage(file);
+      }
+      setUploadStatus('업로드 중...');
+
       // 파일명 생성
-      const fileExt = file.name.split('.').pop();
+      const fileExt = uploadFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `gacha-posts/${fileName}`;
 
       // Supabase Storage에 업로드
       const { error } = await supabase.storage
         .from('images')
-        .upload(filePath, file);
+        .upload(filePath, uploadFile);
 
       if (error) throw error;
 
@@ -128,6 +182,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
       alert('이미지 업로드에 실패했습니다.');
     } finally {
       setUploading(false);
+      setUploadStatus('');
     }
   };
 
@@ -343,7 +398,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
 
             {previewImage ? (
               <div className='relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden'>
-                <Image src={previewImage} alt='Preview' fill className='object-contain' />
+                <Image loader={wsrvLoader} src={previewImage} alt='Preview' fill className='object-contain' />
                 <button
                   type='button'
                   onClick={handleRemoveImage}
@@ -359,7 +414,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
                   <p className='mb-2 text-sm text-gray-500'>
                     <span className='font-semibold'>클릭하여 업로드</span>
                   </p>
-                  <p className='text-xs text-gray-500'>PNG, JPG (최대 5MB)</p>
+                  <p className='text-xs text-gray-500'>PNG, JPG (최대 20MB)</p>
                 </div>
                 <input
                   type='file'
@@ -371,7 +426,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
               </label>
             )}
 
-            {uploading && <p className='text-sm text-blue-600 mt-2'>업로드 중...</p>}
+            {uploading && <p className='text-sm text-blue-600 mt-2'>{uploadStatus || '업로드 중...'}</p>}
           </div>
 
           {/* 제출 버튼 */}

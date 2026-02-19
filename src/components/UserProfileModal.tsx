@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { X, Camera, Save } from 'lucide-react';
 import Image from 'next/image';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface UserProfileModalProps {
   user: User;
@@ -146,6 +147,7 @@ export default function UserProfileModal({ user, isOpen, onClose }: UserProfileM
                 <div className='w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200'>
                   {avatarUrl ? (
                     <Image
+                      loader={wsrvLoader}
                       src={avatarUrl}
                       alt='Profile'
                       width={96}
