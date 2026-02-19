@@ -91,6 +91,12 @@ export default function GachaBoardPage() {
       <div className='container mx-auto px-4 py-8 max-w-7xl'>
         {/* 헤더 */}
         <div className='mb-6'>
+          <Link
+            href='/'
+            className='inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors'
+          >
+            ← 지도로 돌아가기
+          </Link>
           <div className='flex items-center justify-between mb-5'>
             <div>
               <h1 className='text-2xl font-bold text-gray-900 mb-0.5'>신규 가챠 &amp; 쿠지 정보</h1>
