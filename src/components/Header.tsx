@@ -32,10 +32,16 @@ export default function Header() {
     <>
       <header className='sticky top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none bg-white shadow-md'>
         {/* 로고 영역 */}
-        <div className='pointer-events-auto flex items-center justify-center'>
+        <div className='pointer-events-auto flex items-center justify-center gap-1'>
           <Image src={'/logo.png'} alt='가챠맵 로고' width={50} height={50} />
           <Link href='/' className='text-xl text-neutral-900 px-3 py-1'>
             전국 가챠 지도 1.01v
+          </Link>
+          <Link
+            href='/gacha-board'
+            className='hidden sm:inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors'
+          >
+            신규 가챠 정보
           </Link>
         </div>
 

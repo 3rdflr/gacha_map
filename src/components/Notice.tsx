@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Notice() {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,6 +53,15 @@ export default function Notice() {
               별도의 외부 유료 광고 협찬 없이 운영되오니, <br />
               새로운 정보가 있다면 언제든 제보 부탁드립니다!
             </p>
+            <div className='mt-2 pt-2 border-t border-gray-100'>
+              <Link
+                href='/gacha-board'
+                onClick={() => setIsOpen(false)}
+                className='inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors'
+              >
+                🎰 신규 가챠 &amp; 이치방쿠지 정보 보러가기 →
+              </Link>
+            </div>
           </div>
 
           {/* 버튼 영역 */}
