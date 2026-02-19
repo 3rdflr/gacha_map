@@ -18,7 +18,6 @@ interface GachaPost {
   country: string;
   price: number;
   image_url: string;
-  images: string[];
   series: string;
   tags: string[];
   view_count: number;
@@ -85,8 +84,11 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
     });
   };
 
-  const formatPrice = (price: number) => {
-    return price ? `${price.toLocaleString()}원` : '가격 미정';
+  const formatPrice = (price: number, country: string) => {
+    if (!price) return '가격 미정';
+    return country === '일본'
+      ? `¥${price.toLocaleString()}`
+      : `${price.toLocaleString()}원`;
   };
 
   if (loading) {
@@ -133,7 +135,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
         <div className='bg-white rounded-xl shadow-lg overflow-hidden'>
           {/* 이미지 갤러리 */}
           {(() => {
-            const allImages = post.images?.length ? post.images : post.image_url ? [post.image_url] : [];
+            const allImages = post.image_url ? [post.image_url] : [];
             if (allImages.length === 0) return null;
             return (
               <div className='relative w-full bg-gray-100'>
@@ -227,7 +229,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
                     <span>조회 {post.view_count}</span>
                   </div>
                   {post.price && (
-                    <div className='font-bold text-blue-600 text-lg'>{formatPrice(post.price)}</div>
+                    <div className='font-bold text-blue-600 text-lg'>{formatPrice(post.price, post.country)}</div>
                   )}
                 </div>
               </div>

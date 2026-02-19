@@ -80,14 +80,9 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
           tags: data.tags?.join(', ') || '',
         });
 
-        // 기존 이미지 복원 (image_url + images 배열)
+        // 기존 이미지 복원
         const existingUrls: string[] = [];
         if (data.image_url) existingUrls.push(data.image_url);
-        if (data.images) {
-          data.images.forEach((url: string) => {
-            if (url !== data.image_url) existingUrls.push(url);
-          });
-        }
         setUploadItems(
           existingUrls.map((url) => ({
             id: url,
@@ -253,7 +248,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : [],
         image_url: firstImageUrl,
         thumbnail_url: firstImageUrl,
-        images: doneUrls,
         updated_at: new Date().toISOString(),
       };
 
