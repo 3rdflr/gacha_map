@@ -8,6 +8,7 @@ let authListener: Subscription | null = null;
 interface Profile {
   nickname?: string;
   avatar_url?: string;
+  is_admin?: boolean;
 }
 
 interface AuthState {
@@ -38,7 +39,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('nickname, avatar_url')
+        .select('nickname, avatar_url, is_admin')
         .eq('id', userId)
         .single();
 
