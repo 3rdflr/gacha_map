@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Shop } from '@/types/db';
+import { wsrvLoader } from '@/components/common/wsrvLoader';
 // import GoogleAd from '@/components/GoogleAd';
 import ReviewForm from '@/components/ReviewForm';
 import ReportForm from '@/components/ReportForm';
@@ -118,6 +119,7 @@ export default function ShopDetailView({ shop, onClose, onBackToList }: ShopDeta
       {hasImages && (
         <div className='relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gray-100 mt-12'>
           <Image
+            loader={wsrvLoader}
             src={shop.images![currentImageIndex]}
             alt={`${shop.name} - ${currentImageIndex + 1}`}
             className='w-full h-full object-cover'
