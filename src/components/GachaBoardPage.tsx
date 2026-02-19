@@ -75,8 +75,9 @@ export default function GachaBoardPage() {
     });
   };
 
-  const formatPrice = (price: number) => {
-    return price ? `${price.toLocaleString()}원` : '가격 미정';
+  const formatPrice = (price: number, country: string) => {
+    if (!price) return '가격 미정';
+    return country === '일본' ? `${price.toLocaleString()}엔` : `${price.toLocaleString()}원`;
   };
 
   const tabs = [
@@ -100,8 +101,7 @@ export default function GachaBoardPage() {
                 href='/gacha-board/create'
                 className='flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95'
               >
-                <Plus size={15} />
-                새 게시글
+                <Plus size={15} />새 게시글
               </Link>
             )}
           </div>
@@ -130,7 +130,9 @@ export default function GachaBoardPage() {
               <button
                 onClick={() => setSortBy('latest')}
                 className={`text-xs transition-colors ${
-                  sortBy === 'latest' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
+                  sortBy === 'latest'
+                    ? 'text-gray-900 font-semibold'
+                    : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 최신순
@@ -139,7 +141,9 @@ export default function GachaBoardPage() {
               <button
                 onClick={() => setSortBy('release')}
                 className={`text-xs transition-colors ${
-                  sortBy === 'release' ? 'text-gray-900 font-semibold' : 'text-gray-400 hover:text-gray-600'
+                  sortBy === 'release'
+                    ? 'text-gray-900 font-semibold'
+                    : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 출시일순
@@ -152,7 +156,10 @@ export default function GachaBoardPage() {
         {loading ? (
           <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className='bg-white rounded-xl overflow-hidden animate-pulse border border-gray-100'>
+              <div
+                key={i}
+                className='bg-white rounded-xl overflow-hidden animate-pulse border border-gray-100'
+              >
                 <div className='aspect-square bg-gray-200' />
                 <div className='p-3 space-y-2'>
                   <div className='h-3 bg-gray-200 rounded w-1/3' />
@@ -233,7 +240,9 @@ export default function GachaBoardPage() {
                         <span className='text-xs'>{formatDate(post.release_date)}</span>
                       </div>
                       {post.price ? (
-                        <span className='text-xs font-bold text-blue-600'>{formatPrice(post.price)}</span>
+                        <span className='text-xs font-bold text-blue-600'>
+                          {formatPrice(post.price, post.country)}
+                        </span>
                       ) : null}
                     </div>
                   </div>
