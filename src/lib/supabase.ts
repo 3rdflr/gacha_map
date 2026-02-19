@@ -10,15 +10,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     schema: 'public',
   },
   auth: {
-    persistSession: true, // 세션 유지 활성화
-    autoRefreshToken: true, // 토큰 자동 갱신
-    detectSessionInUrl: true, // URL에서 세션 감지
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined, // 로컬 스토리지 사용
-  },
-  global: {
-    headers: {
-      'cache-control': 'no-cache', // 캐시 비활성화
-    },
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
 });
 

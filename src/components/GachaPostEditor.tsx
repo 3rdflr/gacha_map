@@ -18,15 +18,19 @@ interface PostFormData {
   price: string;
   series: string;
   tags: string;
-  image_url: string;
+}
+
+interface UploadItem {
+  id: string;           // 로컬 임시 ID
+  previewUrl: string;   // 로컬 blob URL (미리보기용)
+  publicUrl: string;    // 업로드 후 Supabase URL (없으면 '')
+  status: 'pending' | 'compressing' | 'uploading' | 'done' | 'error';
 }
 
 export default function GachaPostEditor({ postId }: { postId?: string }) {
   const router = useRouter();
   const { user, profile } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string>('');
   const [formData, setFormData] = useState<PostFormData>({
     title: '',
     description: '',
@@ -36,9 +40,8 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     price: '',
     series: '',
     tags: '',
-    image_url: '',
   });
-  const [previewImage, setPreviewImage] = useState<string>('');
+  const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
 
   // 관리자 권한 체크
   useEffect(() => {
@@ -75,9 +78,24 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
           price: data.price?.toString() || '',
           series: data.series || '',
           tags: data.tags?.join(', ') || '',
-          image_url: data.image_url || '',
         });
-        setPreviewImage(data.image_url || '');
+
+        // 기존 이미지 복원 (image_url + images 배열)
+        const existingUrls: string[] = [];
+        if (data.image_url) existingUrls.push(data.image_url);
+        if (data.images) {
+          data.images.forEach((url: string) => {
+            if (url !== data.image_url) existingUrls.push(url);
+          });
+        }
+        setUploadItems(
+          existingUrls.map((url) => ({
+            id: url,
+            previewUrl: url,
+            publicUrl: url,
+            status: 'done',
+          })),
+        );
       }
     } catch (error) {
       console.error('Error fetching post:', error);
@@ -92,8 +110,8 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 20MB 초과 시 Canvas로 압축
-  const compressImage = (file: File, targetSizeMB = 20): Promise<File> => {
+  // 항상 리사이즈+압축 (빠른 업로드를 위해 무조건 적용)
+  const compressForUpload = (file: File): Promise<File> => {
     return new Promise((resolve) => {
       const img = new window.Image();
       const url = URL.createObjectURL(file);
@@ -102,8 +120,8 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
 
-        // 긴 변 기준 최대 3000px로 리사이즈
-        const MAX_PX = 3000;
+        // 긴 변 기준 최대 1920px (업로드 크기 대폭 절감)
+        const MAX_PX = 1920;
         if (width > MAX_PX || height > MAX_PX) {
           if (width > height) {
             height = Math.round((height * MAX_PX) / width);
@@ -118,78 +136,86 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         canvas.height = height;
         canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
 
-        // quality를 낮춰가며 목표 용량 이하로 맞춤
-        let quality = 0.9;
-        const tryCompress = () => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) return resolve(file);
-              if (blob.size <= targetSizeMB * 1024 * 1024 || quality <= 0.3) {
-                resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
-              } else {
-                quality -= 0.1;
-                tryCompress();
-              }
-            },
-            'image/jpeg',
-            quality,
-          );
-        };
-        tryCompress();
+        // quality 고정 0.82 — 화질/용량 최적점, 반복 루프 없이 1회 처리
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(file);
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          0.82,
+        );
       };
       img.src = url;
     });
   };
 
-  // 이미지 업로드
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // 단일 파일 업로드 (압축 포함)
+  const uploadOne = async (item: UploadItem, file: File): Promise<string> => {
+    // 압축 단계
+    setUploadItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, status: 'compressing' } : i)),
+    );
+    const uploadFile = await compressForUpload(file);
 
-    setUploading(true);
+    // 업로드 단계
+    setUploadItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)),
+    );
+    const fileExt = uploadFile.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `gacha-posts/${fileName}`;
 
-    try {
-      let uploadFile = file;
+    const { error } = await supabase.storage.from('images').upload(filePath, uploadFile);
+    if (error) throw error;
 
-      // 20MB 초과 시 자동 압축
-      if (file.size > 20 * 1024 * 1024) {
-        setUploadStatus('이미지 압축 중...');
-        uploadFile = await compressImage(file);
-      }
-      setUploadStatus('업로드 중...');
-
-      // 파일명 생성
-      const fileExt = uploadFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `gacha-posts/${fileName}`;
-
-      // Supabase Storage에 업로드
-      const { error } = await supabase.storage
-        .from('images')
-        .upload(filePath, uploadFile);
-
-      if (error) throw error;
-
-      // 공개 URL 가져오기
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('images').getPublicUrl(filePath);
-
-      setFormData((prev) => ({ ...prev, image_url: publicUrl }));
-      setPreviewImage(publicUrl);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('이미지 업로드에 실패했습니다.');
-    } finally {
-      setUploading(false);
-      setUploadStatus('');
-    }
+    const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(filePath);
+    return publicUrl;
   };
 
-  // 이미지 제거
-  const handleRemoveImage = () => {
-    setFormData((prev) => ({ ...prev, image_url: '' }));
-    setPreviewImage('');
+  // 파일 선택 시 — 병렬 업로드
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // 즉시 미리보기 아이템 추가
+    const newItems: UploadItem[] = files.map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      previewUrl: URL.createObjectURL(file),
+      publicUrl: '',
+      status: 'pending',
+    }));
+    setUploadItems((prev) => [...prev, ...newItems]);
+
+    // 모든 파일 병렬 업로드
+    await Promise.all(
+      files.map(async (file, idx) => {
+        const item = newItems[idx];
+        try {
+          const publicUrl = await uploadOne(item, file);
+          setUploadItems((prev) =>
+            prev.map((i) => (i.id === item.id ? { ...i, publicUrl, status: 'done' } : i)),
+          );
+        } catch {
+          setUploadItems((prev) =>
+            prev.map((i) => (i.id === item.id ? { ...i, status: 'error' } : i)),
+          );
+        }
+      }),
+    );
+
+    // input 초기화 (같은 파일 재선택 가능하도록)
+    e.target.value = '';
+  };
+
+  const handleRemoveImage = (id: string) => {
+    setUploadItems((prev) => {
+      const item = prev.find((i) => i.id === id);
+      if (item && item.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+      return prev.filter((i) => i.id !== id);
+    });
   };
 
   // 폼 제출
@@ -200,14 +226,21 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
       alert('로그인이 필요합니다.');
       return;
     }
-
     if (!formData.title || !formData.release_date) {
       alert('제목과 출시일은 필수 항목입니다.');
       return;
     }
 
-    setLoading(true);
+    const isUploading = uploadItems.some((i) => i.status === 'compressing' || i.status === 'uploading');
+    if (isUploading) {
+      alert('이미지 업로드가 완료될 때까지 기다려주세요.');
+      return;
+    }
 
+    const doneUrls = uploadItems.filter((i) => i.status === 'done').map((i) => i.publicUrl);
+    const firstImageUrl = doneUrls[0] || '';
+
+    setLoading(true);
     try {
       const postData = {
         title: formData.title,
@@ -218,24 +251,18 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         price: formData.price ? parseInt(formData.price) : null,
         series: formData.series,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : [],
-        image_url: formData.image_url,
-        thumbnail_url: formData.image_url,
+        image_url: firstImageUrl,
+        thumbnail_url: firstImageUrl,
+        images: doneUrls,
         updated_at: new Date().toISOString(),
       };
 
       if (postId) {
-        // 수정
         const { error } = await supabase.from('gacha_posts').update(postData).eq('id', postId);
-
         if (error) throw error;
         alert('게시글이 수정되었습니다.');
       } else {
-        // 새 글 작성
-        const { error } = await supabase.from('gacha_posts').insert({
-          ...postData,
-          created_by: user.id,
-        });
-
+        const { error } = await supabase.from('gacha_posts').insert({ ...postData, created_by: user.id });
         if (error) throw error;
         alert('게시글이 등록되었습니다.');
       }
@@ -249,19 +276,17 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     }
   };
 
-  if (!profile?.is_admin) {
-    return null;
-  }
+  if (!profile?.is_admin) return null;
+
+  const isUploading = uploadItems.some((i) => i.status === 'compressing' || i.status === 'uploading');
+  const doneCount = uploadItems.filter((i) => i.status === 'done').length;
 
   return (
     <div className='min-h-screen bg-gray-50 py-8'>
       <div className='container mx-auto px-4 max-w-4xl'>
         {/* 헤더 */}
         <div className='mb-8'>
-          <Link
-            href='/gacha-board'
-            className='inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4'
-          >
+          <Link href='/gacha-board' className='inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4'>
             <ArrowLeft size={20} />
             목록으로 돌아가기
           </Link>
@@ -305,7 +330,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
                 <option value='한국'>🇰🇷 한국</option>
               </select>
             </div>
-
             <div>
               <label className='block text-sm font-semibold text-gray-700 mb-2'>
                 브랜드 <span className='text-red-500'>*</span>
@@ -321,7 +345,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
                 <option value='쿠지'>쿠지</option>
               </select>
             </div>
-
             <div>
               <label className='block text-sm font-semibold text-gray-700 mb-2'>시리즈</label>
               <input
@@ -350,7 +373,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
                 required
               />
             </div>
-
             <div>
               <label className='block text-sm font-semibold text-gray-700 mb-2'>가격 (원)</label>
               <input
@@ -379,9 +401,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
 
           {/* 태그 */}
           <div className='mb-6'>
-            <label className='block text-sm font-semibold text-gray-700 mb-2'>
-              태그 (쉼표로 구분)
-            </label>
+            <label className='block text-sm font-semibold text-gray-700 mb-2'>태그 (쉼표로 구분)</label>
             <input
               type='text'
               name='tags'
@@ -394,52 +414,111 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
 
           {/* 이미지 업로드 */}
           <div className='mb-6'>
-            <label className='block text-sm font-semibold text-gray-700 mb-2'>이미지</label>
+            <div className='flex items-center justify-between mb-2'>
+              <label className='block text-sm font-semibold text-gray-700'>
+                이미지
+                {uploadItems.length > 0 && (
+                  <span className='ml-2 text-xs font-normal text-gray-400'>
+                    {doneCount}/{uploadItems.length}장 완료
+                  </span>
+                )}
+              </label>
+            </div>
 
-            {previewImage ? (
-              <div className='relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden'>
-                <Image loader={wsrvLoader} src={previewImage} alt='Preview' fill className='object-contain' />
-                <button
-                  type='button'
-                  onClick={handleRemoveImage}
-                  className='absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition'
-                >
-                  <X size={16} />
-                </button>
+            {/* 이미지 그리드 */}
+            {uploadItems.length > 0 && (
+              <div className='grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3'>
+                {uploadItems.map((item, idx) => (
+                  <div key={item.id} className='relative aspect-square bg-gray-100 rounded-lg overflow-hidden'>
+                    <Image
+                      loader={item.status === 'done' ? wsrvLoader : undefined}
+                      src={item.previewUrl}
+                      alt={`이미지 ${idx + 1}`}
+                      fill
+                      unoptimized={item.status !== 'done'}
+                      className='object-cover'
+                    />
+
+                    {/* 첫 번째 이미지 표시 */}
+                    {idx === 0 && item.status === 'done' && (
+                      <div className='absolute bottom-1 left-1'>
+                        <span className='text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded'>대표</span>
+                      </div>
+                    )}
+
+                    {/* 상태 오버레이 */}
+                    {(item.status === 'compressing' || item.status === 'uploading') && (
+                      <div className='absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1'>
+                        <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                        <span className='text-white text-xs'>
+                          {item.status === 'compressing' ? '압축중' : '업로드중'}
+                        </span>
+                      </div>
+                    )}
+                    {item.status === 'error' && (
+                      <div className='absolute inset-0 bg-red-500/70 flex items-center justify-center'>
+                        <span className='text-white text-xs font-semibold'>실패</span>
+                      </div>
+                    )}
+
+                    {/* 삭제 버튼 */}
+                    <button
+                      type='button'
+                      onClick={() => handleRemoveImage(item.id)}
+                      className='absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-black/80 transition'
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* 추가 업로드 버튼 (이미지가 있을 때) */}
+                <label className='aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition'>
+                  <Upload size={20} className='text-gray-400 mb-1' />
+                  <span className='text-xs text-gray-400'>추가</span>
+                  <input
+                    type='file'
+                    className='hidden'
+                    accept='image/*'
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                  />
+                </label>
               </div>
-            ) : (
-              <label className='flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition'>
-                <div className='flex flex-col items-center justify-center pt-5 pb-6'>
-                  <Upload className='w-12 h-12 text-gray-400 mb-3' />
-                  <p className='mb-2 text-sm text-gray-500'>
+            )}
+
+            {/* 초기 업로드 영역 */}
+            {uploadItems.length === 0 && (
+              <label className='flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition'>
+                <div className='flex flex-col items-center justify-center'>
+                  <Upload className='w-10 h-10 text-gray-400 mb-2' />
+                  <p className='text-sm text-gray-500 mb-1'>
                     <span className='font-semibold'>클릭하여 업로드</span>
                   </p>
-                  <p className='text-xs text-gray-500'>PNG, JPG (최대 20MB)</p>
+                  <p className='text-xs text-gray-400'>여러 장 동시 선택 가능 · 20MB 초과 시 자동 압축</p>
                 </div>
                 <input
                   type='file'
                   className='hidden'
                   accept='image/*'
+                  multiple
                   onChange={handleImageUpload}
-                  disabled={uploading}
                 />
               </label>
             )}
-
-            {uploading && <p className='text-sm text-blue-600 mt-2'>{uploadStatus || '업로드 중...'}</p>}
           </div>
 
           {/* 제출 버튼 */}
           <div className='flex gap-4'>
             <button
               type='submit'
-              disabled={loading || uploading}
+              disabled={loading || isUploading}
               className='flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed'
             >
               <Save size={20} />
-              {loading ? '저장 중...' : postId ? '수정하기' : '등록하기'}
+              {loading ? '저장 중...' : isUploading ? '업로드 중...' : postId ? '수정하기' : '등록하기'}
             </button>
-
             <Link
               href='/gacha-board'
               className='px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition'

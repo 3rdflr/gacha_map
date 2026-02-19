@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, Eye, Tag, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Eye, Tag, ArrowLeft, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { wsrvLoader } from '@/components/common/wsrvLoader';
 
 interface GachaPost {
@@ -18,6 +18,7 @@ interface GachaPost {
   country: string;
   price: number;
   image_url: string;
+  images: string[];
   series: string;
   tags: string[];
   view_count: number;
@@ -29,6 +30,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
   const { profile } = useAuthStore();
   const [post, setPost] = useState<GachaPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
   const isAdmin = profile?.is_admin || false;
 
@@ -129,19 +131,62 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
 
         {/* 게시글 컨테이너 */}
         <div className='bg-white rounded-xl shadow-lg overflow-hidden'>
-          {/* 이미지 */}
-          {post.image_url && (
-            <div className='relative w-full h-96 bg-gradient-to-br from-blue-100 to-purple-100'>
-              <Image
-                loader={wsrvLoader}
-                src={post.image_url}
-                alt={post.title}
-                fill
-                className='object-contain'
-                priority
-              />
-            </div>
-          )}
+          {/* 이미지 갤러리 */}
+          {(() => {
+            const allImages = post.images?.length ? post.images : post.image_url ? [post.image_url] : [];
+            if (allImages.length === 0) return null;
+            return (
+              <div className='relative w-full bg-gray-100'>
+                {/* 메인 이미지 */}
+                <div className='relative w-full h-96'>
+                  <Image
+                    loader={wsrvLoader}
+                    src={allImages[currentImageIdx]}
+                    alt={`${post.title} - ${currentImageIdx + 1}`}
+                    fill
+                    className='object-contain'
+                    priority
+                  />
+                  {/* 이전/다음 버튼 */}
+                  {allImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIdx((i) => (i - 1 + allImages.length) % allImages.length)}
+                        className='absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full transition'
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIdx((i) => (i + 1) % allImages.length)}
+                        className='absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full transition'
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                      <div className='absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full'>
+                        {currentImageIdx + 1} / {allImages.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {/* 썸네일 목록 */}
+                {allImages.length > 1 && (
+                  <div className='flex gap-2 p-2 overflow-x-auto'>
+                    {allImages.map((url, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentImageIdx(idx)}
+                        className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition ${
+                          idx === currentImageIdx ? 'border-blue-500' : 'border-transparent'
+                        }`}
+                      >
+                        <Image loader={wsrvLoader} src={url} alt={`썸네일 ${idx + 1}`} fill className='object-cover' />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* 내용 */}
           <div className='p-8'>
