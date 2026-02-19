@@ -13,6 +13,7 @@ interface PostFormData {
   description: string;
   release_date: string;
   brand: string;
+  country: string;
   price: string;
   series: string;
   tags: string;
@@ -29,6 +30,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     description: '',
     release_date: '',
     brand: '가챠',
+    country: '일본',
     price: '',
     series: '',
     tags: '',
@@ -67,6 +69,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
           description: data.description || '',
           release_date: data.release_date,
           brand: data.brand,
+          country: data.country || '일본',
           price: data.price?.toString() || '',
           series: data.series || '',
           tags: data.tags?.join(', ') || '',
@@ -156,6 +159,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         description: formData.description,
         release_date: formData.release_date,
         brand: formData.brand,
+        country: formData.country,
         price: formData.price ? parseInt(formData.price) : null,
         series: formData.series,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : [],
@@ -229,8 +233,24 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
             />
           </div>
 
-          {/* 브랜드 & 시리즈 */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+          {/* 국가 & 브랜드 & 시리즈 */}
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-6'>
+            <div>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                국가 <span className='text-red-500'>*</span>
+              </label>
+              <select
+                name='country'
+                value={formData.country}
+                onChange={handleInputChange}
+                className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none'
+                required
+              >
+                <option value='일본'>🇯🇵 일본</option>
+                <option value='한국'>🇰🇷 한국</option>
+              </select>
+            </div>
+
             <div>
               <label className='block text-sm font-semibold text-gray-700 mb-2'>
                 브랜드 <span className='text-red-500'>*</span>

@@ -14,6 +14,7 @@ interface GachaPost {
   description: string;
   release_date: string;
   brand: string;
+  country: string;
   price: number;
   image_url: string;
   series: string;
@@ -145,17 +146,29 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
             {/* 헤더 */}
             <div className='flex items-start justify-between mb-6'>
               <div className='flex-1'>
-                {/* 브랜드 배지 */}
-                <div className='flex items-center gap-2 mb-3'>
+                {/* 국가 & 브랜드 배지 */}
+                <div className='flex items-center gap-2 mb-3 flex-wrap'>
+                  {post.country === '일본' && (
+                    <span className='px-3 py-1 rounded-full text-sm font-bold text-white bg-red-500'>
+                      🇯🇵 일본 쿠지
+                    </span>
+                  )}
+                  {post.country === '한국' && (
+                    <span className='px-3 py-1 rounded-full text-sm font-bold text-white bg-blue-500'>
+                      🇰🇷 한국 쿠지
+                    </span>
+                  )}
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-bold text-white ${
-                      post.brand === '가챠' ? 'bg-blue-500' : 'bg-purple-500'
+                    className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      post.brand === '가챠'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-purple-100 text-purple-700'
                     }`}
                   >
                     {post.brand}
                   </span>
                   {post.series && (
-                    <span className='text-sm text-blue-600 font-medium'>{post.series}</span>
+                    <span className='text-sm text-gray-500 font-medium'>{post.series}</span>
                   )}
                 </div>
 
