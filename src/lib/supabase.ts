@@ -21,18 +21,12 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
  * 모든 인증된 가게 목록을 가져오는 함수
  */
 export async function getVerifiedShops(): Promise<Shop[]> {
-  console.log('🔍 Fetching shops from Supabase...');
-
   const { data, error } = await supabase.from('shops').select('*').eq('is_verified', true);
 
   if (error) {
     console.error('❌ Supabase Error:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
     return [];
   }
-
-  console.log('✅ Fetched shops:', data?.length || 0);
-  console.log('Sample data:', data?.[0]); // 첫 번째 데이터 확인
 
   return data as Shop[];
 }

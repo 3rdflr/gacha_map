@@ -39,7 +39,8 @@ export default function ShopDetailView({ shop, onClose, onBackToList }: ShopDeta
         .from('reviews')
         .select('*')
         .eq('shop_id', shop.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10);
 
       if (error) throw error;
 
@@ -59,9 +60,8 @@ export default function ShopDetailView({ shop, onClose, onBackToList }: ShopDeta
     }
   };
 
-  useEffect(() => {
-    fetchReviews();
-  }, [shop.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchReviews(); }, [shop.id]);
 
   const nextImage = () => {
     if (hasImages && shop) {

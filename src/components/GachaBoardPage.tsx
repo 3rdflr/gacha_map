@@ -38,9 +38,8 @@ export default function GachaBoardPage() {
 
   const isAdmin = profile?.is_admin || false;
 
-  useEffect(() => {
-    fetchPosts();
-  }, [selectedBrand, sortBy]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchPosts(); }, [selectedBrand, sortBy]);
 
   const fetchPosts = async () => {
     setLoading(true);

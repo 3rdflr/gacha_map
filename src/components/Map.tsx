@@ -40,7 +40,6 @@ export default function KakaoMap({ shops }: MapProps) {
     const loadKakaoMap = () => {
       if (window.kakao && window.kakao.maps) {
         window.kakao.maps.load(() => {
-          console.log('카카오맵 로드 완료');
           setIsMapLoaded(true);
         });
       } else {
@@ -48,7 +47,6 @@ export default function KakaoMap({ shops }: MapProps) {
           if (window.kakao && window.kakao.maps) {
             clearInterval(checkInterval);
             window.kakao.maps.load(() => {
-              console.log('카카오맵 로드 완료 (재시도)');
               setIsMapLoaded(true);
             });
           }

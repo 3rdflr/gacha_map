@@ -78,9 +78,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // 리스너 등록 + subscription 저장
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth Event:', event);
-
       if (event === 'SIGNED_IN' && session?.user) {
+        // 이미 같은 유저 + 프로필 로드 완료 상태면 재로드 생략
+        // (페이지 이동, 창 포커스 복귀 등으로 SIGNED_IN이 재발생하는 경우 방지)
+        const currentUser = get().user;
+        if (currentUser?.id === session.user.id && get().profile) return;
         set({ user: session.user });
         await get().loadProfile(session.user.id);
       }
