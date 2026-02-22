@@ -30,7 +30,7 @@ interface UploadItem {
 
 export default function GachaPostEditor({ postId }: { postId?: string }) {
   const router = useRouter();
-  const { user, profile } = useAuthStore();
+  const { user, profile, isLoading: authLoading } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<PostFormData>({
     title: '',
@@ -45,11 +45,12 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
   const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
 
   useEffect(() => {
+    if (authLoading) return; // 세션 로드 완료 전에는 판단하지 않음
     if (!profile?.is_admin) {
       alert('관리자만 접근할 수 있습니다.');
       router.push('/gacha-board');
     }
-  }, [profile, router]);
+  }, [authLoading, profile, router]);
 
   useEffect(() => {
     if (postId) {
@@ -265,6 +266,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     }
   };
 
+  if (authLoading) return null;
   if (!profile?.is_admin) return null;
 
   const isUploading = uploadItems.some((i) => i.status === 'compressing' || i.status === 'uploading');
