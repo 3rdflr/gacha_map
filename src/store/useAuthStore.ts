@@ -22,6 +22,7 @@ interface AuthState {
   loadProfile: (userId: string) => Promise<void>;
   initialize: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -100,5 +101,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await supabase.auth.signOut();
     set({ user: null, profile: null });
     alert('로그아웃 되었습니다.');
+  },
+
+  // 회원 탈퇴
+  deleteAccount: async () => {
+    const user = get().user;
+    if (!user) return;
+
+    const res = await fetch('/api/delete-account', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    });
+
+    if (!res.ok) {
+      throw new Error('회원 탈퇴에 실패했습니다.');
+    }
+
+    await supabase.auth.signOut();
+    set({ user: null, profile: null });
   },
 }));
