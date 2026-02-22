@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Service Role Key — NEXT_PUBLIC_ 없음 → 서버에서만 읽힘, 클라이언트에 절대 노출 안 됨
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
 export async function DELETE(request: Request) {
+  // 요청 시점에 클라이언트 생성 (빌드 타임 평가 방지)
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
   // Authorization 헤더에서 액세스 토큰 추출
   const authHeader = request.headers.get('Authorization');
   const accessToken = authHeader?.replace('Bearer ', '');
