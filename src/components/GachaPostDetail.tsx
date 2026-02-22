@@ -127,7 +127,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
     <div className='min-h-screen bg-gray-50'>
       {/* 상단 메인 이미지 (풀블리드) */}
       {mainImage && (
-        <div className='relative w-full bg-black' style={{ aspectRatio: '4/3', maxHeight: '480px' }}>
+        <div className='relative w-full bg-gray-50' style={{ aspectRatio: '4/3', maxHeight: '480px' }}>
           <Image
             loader={wsrvLoader}
             src={mainImage}
