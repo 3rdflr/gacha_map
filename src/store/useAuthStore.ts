@@ -108,10 +108,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const user = get().user;
     if (!user) return;
 
+    // 현재 세션의 액세스 토큰 가져오기
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('세션이 만료됐습니다. 다시 로그인해주세요.');
+    }
+
+    // 서버에 액세스 토큰을 전달해 본인 확인 후 삭제
     const res = await fetch('/api/delete-account', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
     });
 
     if (!res.ok) {
