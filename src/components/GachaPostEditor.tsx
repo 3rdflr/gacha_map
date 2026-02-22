@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
@@ -43,22 +43,9 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     tags: '',
   });
   const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
-  // 언마운트 여부 추적 — 언마운트 후 비동기 setState 호출 차단
-  const isMounted = useRef(true);
-  // 최초 1회 관리자 확인 완료 여부 — 재포커스 시 중복 redirect 방지
-  const adminChecked = useRef(false);
 
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (adminChecked.current) return; // 이미 통과한 경우 재실행 방지
-    adminChecked.current = true;
+    if (authLoading) return; // 세션 로드 완료 전에는 판단하지 않음
     if (!profile?.is_admin) {
       alert('관리자만 접근할 수 있습니다.');
       router.push('/gacha-board');
@@ -158,21 +145,14 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
   };
 
   const uploadOne = async (item: UploadItem, file: File): Promise<string> => {
-    if (!isMounted.current) throw new Error('unmounted');
-
     setUploadItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, status: 'compressing' } : i)),
     );
     const uploadFile = await compressForUpload(file);
 
-    if (!isMounted.current) throw new Error('unmounted');
     setUploadItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)),
     );
-
-    // 세션 토큰 만료에 대비해 업로드 전 세션 갱신
-    await supabase.auth.refreshSession();
-
     const fileExt = uploadFile.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `gacha-posts/${fileName}`;
@@ -195,7 +175,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
       caption: '',
       status: 'pending',
     }));
-    if (!isMounted.current) return;
     setUploadItems((prev) => [...prev, ...newItems]);
 
     await Promise.all(
@@ -203,12 +182,10 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         const item = newItems[idx];
         try {
           const publicUrl = await uploadOne(item, file);
-          if (!isMounted.current) return;
           setUploadItems((prev) =>
             prev.map((i) => (i.id === item.id ? { ...i, publicUrl, status: 'done' } : i)),
           );
-        } catch (err) {
-          if (!isMounted.current) return;
+        } catch {
           setUploadItems((prev) =>
             prev.map((i) => (i.id === item.id ? { ...i, status: 'error' } : i)),
           );
@@ -254,9 +231,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
 
     setLoading(true);
     try {
-      // 저장 전 세션 갱신 (장시간 작성 시 토큰 만료 방지)
-      await supabase.auth.refreshSession();
-
       const postData = {
         title: formData.title,
         description: formData.description,
@@ -293,8 +267,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
   };
 
   if (authLoading) return null;
-  // adminChecked 이후에만 is_admin 체크 (재포커스 시 순간적 null로 화면 사라지는 현상 방지)
-  if (adminChecked.current && !profile?.is_admin) return null;
+  if (!profile?.is_admin) return null;
 
   const isUploading = uploadItems.some((i) => i.status === 'compressing' || i.status === 'uploading');
   const doneCount = uploadItems.filter((i) => i.status === 'done').length;
