@@ -21,9 +21,10 @@ interface PostFormData {
 }
 
 interface UploadItem {
-  id: string;           // 로컬 임시 ID
-  previewUrl: string;   // 로컬 blob URL (미리보기용)
-  publicUrl: string;    // 업로드 후 Supabase URL (없으면 '')
+  id: string;
+  previewUrl: string;
+  publicUrl: string;
+  caption: string;
   status: 'pending' | 'compressing' | 'uploading' | 'done' | 'error';
 }
 
@@ -43,7 +44,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
   });
   const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
 
-  // 관리자 권한 체크
   useEffect(() => {
     if (!profile?.is_admin) {
       alert('관리자만 접근할 수 있습니다.');
@@ -51,7 +51,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     }
   }, [profile, router]);
 
-  // 수정 모드일 때 기존 데이터 로드
   useEffect(() => {
     if (postId) {
       fetchPost();
@@ -80,14 +79,15 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
           tags: data.tags?.join(', ') || '',
         });
 
-        // 기존 이미지 복원
-        const existingUrls: string[] = [];
-        if (data.image_url) existingUrls.push(data.image_url);
+        // 기존 이미지 복원 (images[] 우선, 없으면 image_url fallback)
+        const existingUrls: string[] = data.images?.length ? data.images : (data.image_url ? [data.image_url] : []);
+        const existingCaptions: string[] = data.captions || [];
         setUploadItems(
-          existingUrls.map((url) => ({
+          existingUrls.map((url, idx) => ({
             id: url,
             previewUrl: url,
             publicUrl: url,
+            caption: existingCaptions[idx] || '',
             status: 'done',
           })),
         );
@@ -105,7 +105,10 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 항상 리사이즈+압축 (빠른 업로드를 위해 무조건 적용)
+  const handleCaptionChange = (id: string, caption: string) => {
+    setUploadItems((prev) => prev.map((i) => (i.id === id ? { ...i, caption } : i)));
+  };
+
   const compressForUpload = (file: File): Promise<File> => {
     return new Promise((resolve) => {
       const img = new window.Image();
@@ -114,8 +117,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         URL.revokeObjectURL(url);
         const canvas = document.createElement('canvas');
         let { width, height } = img;
-
-        // 긴 변 기준 최대 1920px (업로드 크기 대폭 절감)
         const MAX_PX = 1920;
         if (width > MAX_PX || height > MAX_PX) {
           if (width > height) {
@@ -126,12 +127,9 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
             height = MAX_PX;
           }
         }
-
         canvas.width = width;
         canvas.height = height;
         canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-
-        // quality 고정 0.82 — 화질/용량 최적점, 반복 루프 없이 1회 처리
         canvas.toBlob(
           (blob) => {
             if (!blob) return resolve(file);
@@ -145,15 +143,12 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     });
   };
 
-  // 단일 파일 업로드 (압축 포함)
   const uploadOne = async (item: UploadItem, file: File): Promise<string> => {
-    // 압축 단계
     setUploadItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, status: 'compressing' } : i)),
     );
     const uploadFile = await compressForUpload(file);
 
-    // 업로드 단계
     setUploadItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)),
     );
@@ -168,21 +163,19 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     return publicUrl;
   };
 
-  // 파일 선택 시 — 병렬 업로드
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // 즉시 미리보기 아이템 추가
     const newItems: UploadItem[] = files.map((file) => ({
       id: `${Date.now()}-${Math.random()}`,
       previewUrl: URL.createObjectURL(file),
       publicUrl: '',
+      caption: '',
       status: 'pending',
     }));
     setUploadItems((prev) => [...prev, ...newItems]);
 
-    // 모든 파일 병렬 업로드
     await Promise.all(
       files.map(async (file, idx) => {
         const item = newItems[idx];
@@ -199,7 +192,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
       }),
     );
 
-    // input 초기화 (같은 파일 재선택 가능하도록)
     e.target.value = '';
   };
 
@@ -213,7 +205,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     });
   };
 
-  // 폼 제출
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -232,8 +223,10 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
       return;
     }
 
-    const doneUrls = uploadItems.filter((i) => i.status === 'done').map((i) => i.publicUrl);
-    const firstImageUrl = doneUrls[0] || '';
+    const doneItems = uploadItems.filter((i) => i.status === 'done');
+    const images = doneItems.map((i) => i.publicUrl);
+    const captions = doneItems.map((i) => i.caption);
+    const firstImageUrl = images[0] || '';
 
     setLoading(true);
     try {
@@ -248,6 +241,8 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : [],
         image_url: firstImageUrl,
         thumbnail_url: firstImageUrl,
+        images,
+        captions,
         updated_at: new Date().toISOString(),
       };
 
@@ -289,7 +284,6 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
           </h1>
         </div>
 
-        {/* 폼 */}
         <form onSubmit={handleSubmit} className='bg-white rounded-xl shadow-md p-8'>
           {/* 제목 */}
           <div className='mb-6'>
@@ -418,58 +412,70 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
                 )}
               </label>
             </div>
+            <p className='text-xs text-gray-400 mb-3'>첫 번째 이미지가 대표 이미지로 자동 설정됩니다. 각 이미지마다 설명을 입력할 수 있어요.</p>
 
-            {/* 이미지 그리드 */}
+            {/* 이미지 + 캡션 목록 */}
             {uploadItems.length > 0 && (
-              <div className='grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3'>
+              <div className='space-y-4 mb-3'>
                 {uploadItems.map((item, idx) => (
-                  <div key={item.id} className='relative aspect-square bg-gray-100 rounded-lg overflow-hidden'>
-                    <Image
-                      loader={item.status === 'done' ? wsrvLoader : undefined}
-                      src={item.previewUrl}
-                      alt={`이미지 ${idx + 1}`}
-                      fill
-                      unoptimized={item.status !== 'done'}
-                      className='object-cover'
-                    />
+                  <div key={item.id} className='flex gap-3 items-start border border-gray-200 rounded-lg p-3'>
+                    {/* 썸네일 */}
+                    <div className='relative flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden'>
+                      <Image
+                        loader={item.status === 'done' ? wsrvLoader : undefined}
+                        src={item.previewUrl}
+                        alt={`이미지 ${idx + 1}`}
+                        fill
+                        unoptimized={item.status !== 'done'}
+                        className='object-cover'
+                      />
+                      {idx === 0 && item.status === 'done' && (
+                        <div className='absolute bottom-1 left-1'>
+                          <span className='text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded'>대표</span>
+                        </div>
+                      )}
+                      {(item.status === 'compressing' || item.status === 'uploading') && (
+                        <div className='absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1'>
+                          <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                          <span className='text-white text-xs'>
+                            {item.status === 'compressing' ? '압축' : '업로드'}
+                          </span>
+                        </div>
+                      )}
+                      {item.status === 'error' && (
+                        <div className='absolute inset-0 bg-red-500/70 flex items-center justify-center'>
+                          <span className='text-white text-xs font-semibold'>실패</span>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* 첫 번째 이미지 표시 */}
-                    {idx === 0 && item.status === 'done' && (
-                      <div className='absolute bottom-1 left-1'>
-                        <span className='text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded'>대표</span>
-                      </div>
-                    )}
-
-                    {/* 상태 오버레이 */}
-                    {(item.status === 'compressing' || item.status === 'uploading') && (
-                      <div className='absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1'>
-                        <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                        <span className='text-white text-xs'>
-                          {item.status === 'compressing' ? '압축중' : '업로드중'}
-                        </span>
-                      </div>
-                    )}
-                    {item.status === 'error' && (
-                      <div className='absolute inset-0 bg-red-500/70 flex items-center justify-center'>
-                        <span className='text-white text-xs font-semibold'>실패</span>
-                      </div>
-                    )}
+                    {/* 캡션 입력 */}
+                    <div className='flex-1'>
+                      <label className='text-xs text-gray-500 mb-1 block'>이미지 {idx + 1} 설명</label>
+                      <textarea
+                        value={item.caption}
+                        onChange={(e) => handleCaptionChange(item.id, e.target.value)}
+                        rows={3}
+                        className='w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none'
+                        placeholder={idx === 0 ? '대표 이미지 설명 (선택)' : `이미지 ${idx + 1} 설명 (선택)`}
+                      />
+                    </div>
 
                     {/* 삭제 버튼 */}
                     <button
                       type='button'
                       onClick={() => handleRemoveImage(item.id)}
-                      className='absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-black/80 transition'
+                      className='flex-shrink-0 p-1.5 bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded-full transition'
                     >
-                      <X size={12} />
+                      <X size={14} />
                     </button>
                   </div>
                 ))}
 
-                {/* 추가 업로드 버튼 (이미지가 있을 때) */}
-                <label className='aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition'>
-                  <Upload size={20} className='text-gray-400 mb-1' />
-                  <span className='text-xs text-gray-400'>추가</span>
+                {/* 추가 업로드 버튼 */}
+                <label className='flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition text-gray-400 text-sm'>
+                  <Upload size={18} />
+                  이미지 추가
                   <input
                     type='file'
                     className='hidden'
