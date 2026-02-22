@@ -35,9 +35,8 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
 
   const isAdmin = profile?.is_admin || false;
 
-  useEffect(() => {
-    fetchPost();
-  }, [postId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchPost(); }, [postId]);
 
   const fetchPost = async () => {
     setLoading(true);
@@ -234,23 +233,12 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
 
         <hr className='mb-8' />
 
-        {/* 이미지 1 (대표) + 캡션 */}
-        {mainImage && (
+        {/* 첫 번째 이미지 캡션 (이미지는 상단 풀블리드에서 이미 표시) */}
+        {mainImage && allCaptions[0] && (
           <div className='mb-8'>
-            <div className='relative w-full rounded-xl overflow-hidden bg-gray-100' style={{ aspectRatio: '4/3' }}>
-              <Image
-                loader={wsrvLoader}
-                src={mainImage}
-                alt={`${post.title} - 이미지 1`}
-                fill
-                className='object-contain'
-              />
-            </div>
-            {allCaptions[0] && (
-              <p className='mt-3 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap'>
-                {allCaptions[0]}
-              </p>
-            )}
+            <p className='text-sm text-gray-600 leading-relaxed whitespace-pre-wrap'>
+              {allCaptions[0]}
+            </p>
           </div>
         )}
 

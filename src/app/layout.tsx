@@ -112,8 +112,8 @@ export default function RootLayout({
   return (
     <html lang='ko'>
       <head>
-        {/* 카카오맵 스크립트를 head에 배치 */}
-        <Script src={API} strategy='beforeInteractive' />
+        {/* 카카오맵 스크립트 — Map 컴포넌트가 자체적으로 로드 완료를 polling하므로 afterInteractive로 변경 */}
+        <Script src={API} strategy='afterInteractive' />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script

@@ -65,11 +65,8 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
     }
   }, [authLoading, profile, router]);
 
-  useEffect(() => {
-    if (postId) {
-      fetchPost();
-    }
-  }, [postId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (postId) fetchPost(); }, [postId]);
 
   const fetchPost = async () => {
     try {
@@ -207,7 +204,7 @@ export default function GachaPostEditor({ postId }: { postId?: string }) {
           setUploadItems((prev) =>
             prev.map((i) => (i.id === item.id ? { ...i, publicUrl, status: 'done' } : i)),
           );
-        } catch (err) {
+        } catch {
           if (!isMounted.current) return;
           setUploadItems((prev) =>
             prev.map((i) => (i.id === item.id ? { ...i, status: 'error' } : i)),
