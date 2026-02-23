@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Calendar, Eye, Tag, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { wsrvLoader } from '@/components/common/wsrvLoader';
 import GoogleAd from '@/components/GoogleAd';
+import { formatDate, formatPrice } from '@/lib/formatters';
 
 interface GachaPost {
   id: string;
@@ -73,20 +74,6 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const formatPrice = (price: number, country: string) => {
-    if (!price) return '가격 미정';
-    return country === '일본'
-      ? `¥${price.toLocaleString()}`
-      : `${price.toLocaleString()}원`;
-  };
 
   if (loading) {
     return (
