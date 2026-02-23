@@ -4,15 +4,15 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, X, Map, Newspaper } from 'lucide-react';
 import UserProfileModal from './UserProfileModal';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function Header() {
   const { user, profile, isLoading, logout, loadProfile } = useAuthStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // 카카오 로그인 핸들러
   const handleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
@@ -22,38 +22,32 @@ export default function Header() {
     });
   };
 
-  // 표시할 닉네임 결정
   const displayName = profile?.nickname || user?.user_metadata.full_name || '사용자';
-
-  // 표시할 아바타 URL 결정
   const displayAvatar = profile?.avatar_url || user?.user_metadata.avatar_url;
 
   return (
     <>
       <header className='sticky top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none bg-white shadow-md'>
-        {/* 로고 영역 */}
-        <div className='pointer-events-auto flex items-center justify-center gap-1'>
-          <Image src={'/logo.png'} alt='가챠맵 로고' width={50} height={50} />
-          <Link href='/' className='text-xl text-neutral-900 px-3 py-1'>
-            전국 가챠 지도 1.01v
-          </Link>
-          <Link
-            href='/gacha-board'
-            className='hidden sm:inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors'
+        {/* 로고 영역 — 클릭 시 사이드바 */}
+        <div className='pointer-events-auto flex items-center gap-1'>
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className='flex items-center gap-1 rounded-lg hover:bg-gray-100 transition-colors p-1'
+            aria-label='메뉴 열기'
           >
-            신규 가챠 정보
-          </Link>
+            <Image src='/logo.png' alt='가챠맵 로고' width={40} height={40} />
+            <span className='text-sm sm:text-lg font-medium text-neutral-900 px-1'>
+              전국 가챠 지도
+            </span>
+          </button>
         </div>
 
-        {/* 우측 로그인/유저 정보 영역 */}
+        {/* 우측 로그인/유저 영역 */}
         <div className='pointer-events-auto flex items-center gap-2'>
           {isLoading ? (
-            // 로딩 스켈레톤
             <div className='w-20 h-9 bg-gray-200 rounded-full animate-pulse' />
           ) : user ? (
-            // 로그인 상태일 때
             <div className='flex items-center gap-2 bg-white/90 backdrop-blur-sm p-1 pr-3 rounded-full shadow-md border border-gray-200'>
-              {/* 프로필 이미지 (클릭 시 수정 모달) */}
               <button
                 onClick={() => setIsProfileModalOpen(true)}
                 className='relative group'
@@ -72,7 +66,6 @@ export default function Header() {
                     <UserIcon size={16} />
                   </div>
                 )}
-                {/* 호버 시 설정 아이콘 표시 */}
                 <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
                   <Settings size={14} className='text-blue-600' />
                 </div>
@@ -91,16 +84,69 @@ export default function Header() {
               </button>
             </div>
           ) : (
-            // 비로그인 상태일 때
             <button
               onClick={handleLogin}
               className='bg-[#FEE500] hover:bg-[#FDD835] text-black text-sm font-bold px-4 py-2 rounded-full shadow-md transition-transform active:scale-95 flex items-center gap-2'
             >
-              <span className='hidden xs:inline'>카카오</span>로그인
+              카카오 로그인
             </button>
           )}
         </div>
       </header>
+
+      {/* 사이드바 오버레이 */}
+      {isSidebarOpen && (
+        <div
+          className='fixed inset-0 z-50 bg-black/40'
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* 사이드바 */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 flex flex-col ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* 사이드바 헤더 */}
+        <div className='flex items-center justify-between px-5 py-4 border-b'>
+          <div className='flex items-center gap-2'>
+            <Image src='/logo.png' alt='가챠맵 로고' width={32} height={32} />
+            <span className='font-bold text-gray-900'>가챠 지도</span>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className='p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500'
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* 메뉴 */}
+        <nav className='flex-1 px-3 py-4 space-y-1'>
+          <Link
+            href='/'
+            onClick={() => setIsSidebarOpen(false)}
+            className='flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium'
+          >
+            <Map size={20} className='text-blue-500' />
+            가챠 지도
+          </Link>
+          <Link
+            href='/gacha-board'
+            onClick={() => setIsSidebarOpen(false)}
+            className='flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium'
+          >
+            <Newspaper size={20} className='text-blue-500' />
+            신규 가챠·쿠지 정보
+          </Link>
+        </nav>
+
+        {/* 하단 버전 */}
+        <div className='px-5 py-4 border-t text-xs text-gray-400'>
+          전국 가챠 지도 1.01v
+        </div>
+      </aside>
 
       {/* 프로필 수정 모달 */}
       {user && (
@@ -109,7 +155,6 @@ export default function Header() {
           isOpen={isProfileModalOpen}
           onClose={() => {
             setIsProfileModalOpen(false);
-            // 모달 닫을 때 프로필 데이터 새로고침
             if (user) loadProfile(user.id);
           }}
         />

@@ -22,6 +22,7 @@ interface AuthState {
   loadProfile: (userId: string) => Promise<void>;
   initialize: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -77,9 +78,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // 리스너 등록 + subscription 저장
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth Event:', event);
-
       if (event === 'SIGNED_IN' && session?.user) {
+        // 이미 같은 유저 + 프로필 로드 완료 상태면 재로드 생략
+        // (페이지 이동, 창 포커스 복귀 등으로 SIGNED_IN이 재발생하는 경우 방지)
+        const currentUser = get().user;
+        if (currentUser?.id === session.user.id && get().profile) return;
         set({ user: session.user });
         await get().loadProfile(session.user.id);
       }
@@ -100,5 +103,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await supabase.auth.signOut();
     set({ user: null, profile: null });
     alert('로그아웃 되었습니다.');
+  },
+
+  // 회원 탈퇴
+  deleteAccount: async () => {
+    const user = get().user;
+    if (!user) return;
+
+    // 현재 세션의 액세스 토큰 가져오기
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('세션이 만료됐습니다. 다시 로그인해주세요.');
+    }
+
+    // 서버에 액세스 토큰을 전달해 본인 확인 후 삭제
+    const res = await fetch('/api/delete-account', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error('회원 탈퇴에 실패했습니다.');
+    }
+
+    await supabase.auth.signOut();
+    set({ user: null, profile: null });
   },
 }));

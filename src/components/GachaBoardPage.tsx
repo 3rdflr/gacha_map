@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Calendar, Eye, Plus } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { wsrvLoader } from '@/components/common/wsrvLoader';
+import { formatDate, formatPrice } from '@/lib/formatters';
 
 interface GachaPost {
   id: string;
@@ -38,9 +39,8 @@ export default function GachaBoardPage() {
 
   const isAdmin = profile?.is_admin || false;
 
-  useEffect(() => {
-    fetchPosts();
-  }, [selectedBrand, sortBy]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchPosts(); }, [selectedBrand, sortBy]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -67,18 +67,6 @@ export default function GachaBoardPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const formatPrice = (price: number, country: string) => {
-    if (!price) return '가격 미정';
-    return country === '일본' ? `${price.toLocaleString()}엔` : `${price.toLocaleString()}원`;
-  };
 
   const tabs = [
     { value: 'all', label: '전체' },

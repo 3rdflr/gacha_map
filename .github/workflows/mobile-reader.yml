@@ -1,0 +1,51 @@
+name: 📖 Mobile Reader
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  generate-reader:
+    name: Generate Mobile Reader View
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Reader Markdown
+        run: npx github-mobile-reader@latest --repo ${{ github.repository }} --pr ${{ github.event.pull_request.number }} --out ./reader-output
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post PR Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          FILE="./reader-output/pr-${PR_NUMBER}.md"
+          if [ ! -f "$FILE" ]; then
+            echo "No reader file generated."
+            exit 0
+          fi
+
+          # Delete previous bot comment if exists
+          PREV_ID=$(gh api repos/${{ github.repository }}/issues/${PR_NUMBER}/comments \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("# 📖 PR #"))) | .id' \
+            | head -1)
+          if [ -n "$PREV_ID" ]; then
+            gh api -X DELETE repos/${{ github.repository }}/issues/comments/${PREV_ID}
+          fi
+
+          gh pr comment ${PR_NUMBER} --repo ${{ github.repository }} --body-file "$FILE"
