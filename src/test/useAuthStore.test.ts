@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { User } from '@supabase/supabase-js';
 import { useAuthStore } from '@/store/useAuthStore';
 
 // Supabase 전체 mock
@@ -21,27 +22,26 @@ vi.mock('@/lib/supabase', () => {
   };
 });
 
+const mockUser = { id: 'user-1', email: 'test@example.com' } as User;
+
 describe('useAuthStore', () => {
   beforeEach(() => {
-    // 각 테스트 전 스토어 초기 상태로 리셋
     useAuthStore.setState({
       user: null,
       profile: null,
       isLoading: true,
     });
-    // authListener 리셋을 위해 모듈 캐시를 우회
     vi.clearAllMocks();
   });
 
   describe('setUser / setProfile', () => {
     it('setUser로 user를 설정한다', () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com' } as any;
       useAuthStore.getState().setUser(mockUser);
       expect(useAuthStore.getState().user).toEqual(mockUser);
     });
 
     it('setUser(null)로 user를 초기화한다', () => {
-      useAuthStore.setState({ user: { id: 'user-1' } as any });
+      useAuthStore.setState({ user: mockUser });
       useAuthStore.getState().setUser(null);
       expect(useAuthStore.getState().user).toBeNull();
     });
@@ -64,11 +64,12 @@ describe('useAuthStore', () => {
       const { supabase } = await import('@/lib/supabase');
       const mockProfile = { nickname: '홍길동', avatar_url: null, is_admin: false };
 
-      (supabase.from as any).mockReturnValue({
+      vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: mockProfile, error: null }),
-      });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
       await useAuthStore.getState().loadProfile('user-1');
       expect(useAuthStore.getState().profile).toEqual(mockProfile);
@@ -77,11 +78,12 @@ describe('useAuthStore', () => {
     it('프로필 로드 실패 시 profile을 null로 설정한다', async () => {
       const { supabase } = await import('@/lib/supabase');
 
-      (supabase.from as any).mockReturnValue({
+      vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: { message: '프로필 없음' } }),
-      });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
       useAuthStore.setState({ profile: { nickname: '기존유저' } });
       await useAuthStore.getState().loadProfile('user-1');
