@@ -230,38 +230,36 @@ export default function KakaoMap({ shops }: MapProps) {
     setIsSuggestionModalOpen(true);
   };
 
-  if (!isMapLoaded) {
-    return (
-      <div className='relative w-full h-[80vh] rounded-2xl flex items-center justify-center bg-gray-100'>
-        <div className='text-center'>
-          <svg
-            className='animate-spin h-12 w-12 text-blue-600 mx-auto mb-4'
-            xmlns='http://www.w3.org/2000/svg'
-            fill='none'
-            viewBox='0 0 24 24'
-          >
-            <circle
-              className='opacity-25'
-              cx='12'
-              cy='12'
-              r='10'
-              stroke='currentColor'
-              strokeWidth='4'
-            ></circle>
-            <path
-              className='opacity-75'
-              fill='currentColor'
-              d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-            ></path>
-          </svg>
-          <p className='text-gray-600 font-medium'>지도를 불러오는 중...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className='relative w-full h-[80vh] rounded-2xl mb-10'>
+      {/* 지도 로딩 오버레이 — 컨테이너 크기는 항상 유지해 CLS 방지 */}
+      {!isMapLoaded && (
+        <div className='absolute inset-0 z-20 rounded-2xl flex items-center justify-center bg-gray-100'>
+          <div className='text-center'>
+            <svg
+              className='animate-spin h-12 w-12 text-blue-600 mx-auto mb-4'
+              xmlns='http://www.w3.org/2000/svg'
+              fill='none'
+              viewBox='0 0 24 24'
+            >
+              <circle
+                className='opacity-25'
+                cx='12'
+                cy='12'
+                r='10'
+                stroke='currentColor'
+                strokeWidth='4'
+              ></circle>
+              <path
+                className='opacity-75'
+                fill='currentColor'
+                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+              ></path>
+            </svg>
+            <p className='text-gray-600 font-medium'>지도를 불러오는 중...</p>
+          </div>
+        </div>
+      )}
       {/* 카테고리 필터 */}
       <div className='absolute top-4 left-0 right-0 z-10 px-4'>
         <div className='flex gap-2 overflow-x-auto pb-2 scrollbar-hide'>

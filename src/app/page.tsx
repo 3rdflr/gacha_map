@@ -13,8 +13,8 @@ export default async function Home() {
       {/* 헤더 */}
       <Header />
 
-      {/* 지도 */}
-      <section className='flex-1'>
+      {/* 지도 — contain-layout으로 내부 레이아웃이 외부에 영향주지 않도록 격리 */}
+      <section className='flex-1 contain-layout'>
         <KakaoMap shops={shops} />
       </section>
 
