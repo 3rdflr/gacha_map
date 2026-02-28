@@ -107,7 +107,8 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
   const allImages: string[] = post.images?.length ? post.images : (post.image_url ? [post.image_url] : []);
   const allCaptions: string[] = post.captions || [];
   const mainImage = allImages[0] ?? null;
-  const detailImages = allImages.slice(1);
+  // 대표 이미지는 상단 풀블리드 + 하단 콘텐츠 섹션 모두 표시
+  const detailImages = allImages;
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -220,37 +221,25 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
 
         <hr className='mb-8' />
 
-        {/* 첫 번째 이미지 캡션 (이미지는 상단 풀블리드에서 이미 표시) */}
-        {mainImage && allCaptions[0] && (
-          <div className='mb-8'>
-            <p className='text-sm text-gray-600 leading-relaxed whitespace-pre-wrap'>
-              {allCaptions[0]}
-            </p>
-          </div>
-        )}
-
-        {/* 이미지 2~ + 각 캡션 */}
-        {detailImages.map((imgUrl, idx) => {
-          const captionIdx = idx + 1;
-          return (
-            <div key={imgUrl} className='mb-8'>
-              <div className='relative w-full rounded-xl overflow-hidden bg-gray-100' style={{ aspectRatio: '4/3' }}>
-                <Image
-                  loader={wsrvLoader}
-                  src={imgUrl}
-                  alt={`${post.title} - 이미지 ${captionIdx + 1}`}
-                  fill
-                  className='object-contain'
-                />
-              </div>
-              {allCaptions[captionIdx] && (
-                <p className='mt-3 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap'>
-                  {allCaptions[captionIdx]}
-                </p>
-              )}
+        {/* 전체 이미지 + 각 캡션 (대표 이미지 포함) */}
+        {detailImages.map((imgUrl, idx) => (
+          <div key={imgUrl} className='mb-8'>
+            <div className='relative w-full rounded-xl overflow-hidden bg-gray-100' style={{ aspectRatio: '4/3' }}>
+              <Image
+                loader={wsrvLoader}
+                src={imgUrl}
+                alt={`${post.title} - 이미지 ${idx + 1}`}
+                fill
+                className='object-contain'
+              />
             </div>
-          );
-        })}
+            {allCaptions[idx] && (
+              <p className='mt-3 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap'>
+                {allCaptions[idx]}
+              </p>
+            )}
+          </div>
+        ))}
 
         {/* 등록일 */}
         <div className='pt-4 border-t text-xs text-gray-400'>
