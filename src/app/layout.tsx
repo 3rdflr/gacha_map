@@ -8,7 +8,7 @@ import './globals.css';
 import Notice from '@/components/Notice';
 import Footer from '@/components/Footer';
 
-const API = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&libraries=services,clusterer&autoload=false`;
+const API = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&libraries=services,clusterer&autoload=false`;
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -112,8 +112,7 @@ export default function RootLayout({
   return (
     <html lang='ko'>
       <head>
-        {/* 카카오맵 스크립트 — Map 컴포넌트가 자체적으로 로드 완료를 polling하므로 afterInteractive로 변경 */}
-        <Script src={API} strategy='afterInteractive' />
+        <Script src={API} strategy='beforeInteractive' />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script
