@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,17 +30,29 @@ const COUNTRY_FLAG: Record<string, string> = {
   한국: '🇰🇷',
 };
 
-export default function GachaBoardPage() {
+interface Props {
+  initialPosts: GachaPost[];
+}
+
+export default function GachaBoardPage({ initialPosts }: Props) {
   const { profile } = useAuthStore();
-  const [posts, setPosts] = useState<GachaPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<GachaPost[]>(initialPosts);
+  const [loading, setLoading] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'release'>('latest');
 
   const isAdmin = profile?.is_admin || false;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchPosts(); }, [selectedBrand, sortBy]);
+  // 초기 마운트는 SSR 데이터 사용, 필터/정렬 변경 시에만 클라이언트 fetch
+  const isMounted = useRef(false);
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBrand, sortBy]);
 
   const fetchPosts = async () => {
     setLoading(true);
