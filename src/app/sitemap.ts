@@ -23,6 +23,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date('2025-01-01'),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date('2025-01-01'),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
   ];
 
   // 가챠보드 게시글 동적 포함
