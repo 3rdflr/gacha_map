@@ -1,6 +1,7 @@
 import { getVerifiedShops } from '@/lib/supabase';
 import Header from '@/components/Header';
 import KakaoMap from '@/components/Map';
+import GoogleAd from '@/components/GoogleAd';
 
 // 5분마다 재검증 — 매 요청마다 DB를 치지 않도록 캐싱
 export const revalidate = 300;
@@ -9,19 +10,19 @@ export default async function Home() {
   const shops = await getVerifiedShops();
 
   return (
-    <main className='flex min-h-screen flex-col'>
+    <main className='flex flex-col'>
       {/* 헤더 */}
       <Header />
 
       {/* 지도 */}
-      <section className='flex-1'>
+      <section>
         <KakaoMap shops={shops} />
       </section>
 
-      {/* 광고 (지도 위 or 아래 중 선택) */}
-      {/* <section className='w-full h-auto'>
-        <GoogleAd slot='6852499093' />
-      </section> */}
+      {/* 하단 광고 */}
+      <section className='w-full'>
+        <GoogleAd slot='8512765081' />
+      </section>
     </main>
   );
 }
