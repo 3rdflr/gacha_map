@@ -248,7 +248,7 @@ export default function GachaPostDetail({ postId }: { postId: string }) {
 
         {/* 하단 광고 */}
         <div className='mt-8'>
-          <GoogleAd slot='6852499093' format='auto' responsive='true' />
+          <GoogleAd slot='8512765081' format='auto' responsive='true' />
         </div>
       </div>
     </div>

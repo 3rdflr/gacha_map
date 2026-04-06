@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Calendar, Eye, Plus } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { wsrvLoader } from '@/components/common/wsrvLoader';
+import GoogleAd from '@/components/GoogleAd';
 import { formatDate, formatPrice } from '@/lib/formatters';
 
 interface GachaPost {
@@ -258,6 +259,11 @@ export default function GachaBoardPage({ initialPosts }: Props) {
           </div>
         )}
       </div>
+
+        {/* 하단 광고 */}
+        <div className='mt-8'>
+          <GoogleAd slot='8512765081' />
+        </div>
     </div>
   );
 }
