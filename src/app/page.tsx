@@ -17,7 +17,7 @@ export default async function Home() {
       {/* 데스크톱: 지도(좌) + HomeContent(우) 나란히 / 모바일: 세로 스택 */}
       <div className='lg:flex lg:items-start'>
         {/* 지도 (인터랙션 영역) */}
-        <section className='relative h-[70vh] min-h-[500px] w-full lg:sticky lg:top-0 lg:h-screen lg:w-[55%] lg:min-h-screen lg:shrink-0'>
+        <section className='relative h-[70vh]c min-h-[500px] w-full lg:sticky lg:top-0 lg:h-screen lg:w-[55%] lg:min-h-screen lg:shrink-0'>
           <KakaoMap shops={shops} />
         </section>
 
