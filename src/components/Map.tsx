@@ -231,7 +231,7 @@ export default function KakaoMap({ shops }: MapProps) {
   };
 
   return (
-    <div className='relative w-full h-[80vh]'>
+    <div className='relative w-full h-full'>
       {/* 지도 로딩 오버레이 — 컨테이너 크기는 항상 유지해 CLS 방지 */}
       {!isMapLoaded && (
         <div className='absolute inset-0 z-20 rounded-2xl flex items-center justify-center bg-gray-100'>

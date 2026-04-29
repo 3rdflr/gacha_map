@@ -14,13 +14,18 @@ export default async function Home() {
       {/* 헤더 */}
       <Header />
 
-      {/* 지도 (인터랙션 영역) */}
-      <section className='relative h-[70vh] min-h-[500px] w-full'>
-        <KakaoMap shops={shops} />
-      </section>
+      {/* 데스크톱: 지도(좌) + HomeContent(우) 나란히 / 모바일: 세로 스택 */}
+      <div className='lg:flex lg:items-start'>
+        {/* 지도 (인터랙션 영역) */}
+        <section className='relative h-[70vh] min-h-[500px] w-full lg:sticky lg:top-0 lg:h-screen lg:w-[55%] lg:min-h-screen lg:shrink-0'>
+          <KakaoMap shops={shops} />
+        </section>
 
-      {/* SSR 콘텐츠 영역 — 검색엔진/AdSense 크롤러가 읽는 본문 */}
-      <HomeContent shops={shops} />
+        {/* SSR 콘텐츠 영역 — 검색엔진/AdSense 크롤러가 읽는 본문 */}
+        <div className='lg:flex-1 lg:overflow-y-auto lg:h-screen'>
+          <HomeContent shops={shops} />
+        </div>
+      </div>
     </main>
   );
 }
