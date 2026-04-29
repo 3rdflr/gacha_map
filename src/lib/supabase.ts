@@ -30,3 +30,42 @@ export async function getVerifiedShops(): Promise<Shop[]> {
 
   return data as Shop[];
 }
+
+/**
+ * 단일 매장 정보 조회
+ */
+export async function getShopById(id: number): Promise<Shop | null> {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('id', id)
+    .eq('is_verified', true)
+    .single();
+
+  if (error) {
+    console.error('getShopById error:', error);
+    return null;
+  }
+  return data as Shop;
+}
+
+/**
+ * 좌표 근처 매장 N개 (단순 거리 정렬)
+ */
+export async function getNearbyShops(
+  lat: number,
+  lng: number,
+  excludeId: number,
+  limit = 6,
+): Promise<Shop[]> {
+  const all = await getVerifiedShops();
+  return all
+    .filter((s) => s.id !== excludeId)
+    .map((s) => ({
+      shop: s,
+      d: Math.hypot(s.latitude - lat, s.longitude - lng),
+    }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, limit)
+    .map((x) => x.shop);
+}

@@ -1,6 +1,7 @@
 import { getVerifiedShops } from '@/lib/supabase';
 import Header from '@/components/Header';
 import KakaoMap from '@/components/Map';
+import HomeContent from '@/components/HomeContent';
 
 // 5분마다 재검증 — 매 요청마다 DB를 치지 않도록 캐싱
 export const revalidate = 300;
@@ -13,15 +14,13 @@ export default async function Home() {
       {/* 헤더 */}
       <Header />
 
-      {/* 지도 */}
-      <section className='flex-1'>
+      {/* 지도 (인터랙션 영역) */}
+      <section className='relative h-[70vh] min-h-[500px] w-full'>
         <KakaoMap shops={shops} />
       </section>
 
-      {/* 광고 (지도 위 or 아래 중 선택) */}
-      {/* <section className='w-full h-auto'>
-        <GoogleAd slot='6852499093' />
-      </section> */}
+      {/* SSR 콘텐츠 영역 — 검색엔진/AdSense 크롤러가 읽는 본문 */}
+      <HomeContent shops={shops} />
     </main>
   );
 }

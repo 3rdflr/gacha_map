@@ -130,12 +130,16 @@ export default function RootLayout({
             }),
           }}
         />
-        <Script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
-          strategy='afterInteractive'
-          crossOrigin='anonymous'
-        />
+        {/* AdSense 스크립트는 NEXT_PUBLIC_ADSENSE_ENABLED=true 일 때만 로드.
+            정책 위반(Low value content) 재심사 통과 전까지 비활성 권장. */}
+        {process.env.NEXT_PUBLIC_ADSENSE_ENABLED === 'true' && process.env.NEXT_PUBLIC_ADSENSE_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
+            strategy='afterInteractive'
+            crossOrigin='anonymous'
+          />
+        )}
         <Analytics />
         <SpeedInsights />
         <AuthProvider>

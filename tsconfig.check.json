@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "next-env.d.ts",
+    "src/components/HomeContent.tsx",
+    "src/app/page.tsx",
+    "src/app/layout.tsx",
+    "src/app/sitemap.ts",
+    "src/app/faq/page.tsx",
+    "src/app/guide/gacha-beginner/page.tsx",
+    "src/app/guide/ichiban-kuji/page.tsx",
+    "src/app/guide/capsule-toy-brands/page.tsx",
+    "src/app/regions/[slug]/page.tsx",
+    "src/app/shops/[id]/page.tsx",
+    "src/components/Footer.tsx",
+    "src/lib/supabase.ts",
+    "src/types/db.ts"
+  ]
+}
