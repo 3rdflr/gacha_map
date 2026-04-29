@@ -10,7 +10,7 @@ export default async function Home() {
   const shops = await getVerifiedShops();
 
   return (
-    <main className='flex min-h-screen flex-col'>
+    <main className='flex flex-col'>
       {/* 헤더 */}
       <Header />
 
