@@ -105,7 +105,7 @@ export default function IchibanKujiGuide() {
         <p className='leading-relaxed'>
           가까운 이치방쿠지 취급 매장은{' '}
           <Link href='/' className='text-blue-600 hover:underline'>가챠 지도</Link>에서 카테고리
-          필터를 '쿠지'로 설정해 찾을 수 있습니다.
+          필터를 &apos;쿠지&apos;로 설정해 찾을 수 있습니다.
         </p>
       </section>
 
