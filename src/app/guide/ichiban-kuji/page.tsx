@@ -1,10 +1,12 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
-  title: '이치방쿠지(제일복권) 구매 방법 — 등급·확률·매장 가이드',
+  title: '이치방쿠지(제일복권) 완전 가이드 — 구매 방법부터 등급까지',
   description:
-    '이치방쿠지(一番くじ, 제일복권)의 등급 구조, 당첨 확률, 한국에서 정식 매장에서 구매하는 방법을 정리했습니다. 신규 회차·가격대·박스 구매 팁 포함.',
+    '이치방쿠지(제일복권) 구매 방법, 등급 구조(A~라스트원), 가격, 국내 구매처, 꿀팁까지 총정리. 쿠지 처음이라면 이 글 하나로 충분합니다.',
   alternates: { canonical: 'https://gachamap.vercel.app/guide/ichiban-kuji' },
 };
 
@@ -13,135 +15,162 @@ export default function IchibanKujiGuide() {
     <main className='mx-auto max-w-[720px] px-4 py-10 text-gray-800'>
       <nav className='mb-4 text-sm text-gray-500'>
         <Link href='/' className='hover:underline'>홈</Link> /{' '}
-        <span className='text-gray-700'>이치방쿠지 구매 방법</span>
+        <span className='text-gray-700'>이치방쿠지 가이드</span>
       </nav>
 
-      <h1 className='mb-3 text-2xl font-bold'>이치방쿠지(제일복권) 구매 방법 — 등급·확률·매장 가이드</h1>
+      <h1 className='mb-3 text-2xl font-bold'>이치방쿠지(제일복권) 완전 가이드 — 구매 방법부터 등급까지</h1>
       <p className='mb-6 text-sm text-gray-500'>최종 업데이트: 2026년 4월</p>
 
       <p className='mb-6 leading-relaxed'>
-        <strong>이치방쿠지(一番くじ)</strong>, 한국어로는 <strong>제일복권</strong>이라고 부르는 이
-        시스템은 반다이남코의 자회사 <strong>반프레스토(BANPRESTO)</strong>가 운영하는 복권식 굿즈
-        판매 방식입니다. 일본 애니메이션·게임 IP의 한정 굿즈를 등급별로 구성해, 매장에서 한 장씩 티켓을
-        구매하면 정해진 상품이 즉시 지급되는 구조입니다. 이 글에서는 등급 구조, 한국 정식 매장에서
-        구매하는 법, 박스 단위 구매 시 알아둘 점까지 정리했습니다.
+        <strong>이치방쿠지(一番くじ)</strong>는 반다이남코가 운영하는 복권 방식 굿즈 판매 시스템입니다.
+        정해진 박스 안에 A등~라스트원상까지 등급별 티켓이 들어 있고, 한 장 뽑을 때마다 상품을 받는
+        구조입니다. 랜덤박스나 가챠폰과 달리 <strong>박스 전체 구성이 공개</strong>되어 있어 어떤
+        상품이 남아 있는지 확인하면서 전략적으로 도전할 수 있습니다.
       </p>
 
       <section className='mb-8'>
-        <h2 className='mb-3 text-xl font-semibold'>이치방쿠지의 등급 구조</h2>
+        <h2 className='mb-3 text-xl font-semibold'>등급 구조 이해하기</h2>
         <p className='mb-3 leading-relaxed'>
-          한 회차 이치방쿠지는 보통 <strong>A상부터 라스트원상까지 7~8개 등급</strong>으로 구성됩니다.
-          상위 등급일수록 큰 피규어·고급 굿즈가 배정되고, 하위 등급일수록 키링·뱃지·클리어파일 같은
-          소품이 들어갑니다.
+          이치방쿠지는 티켓을 뽑으면 알파벳 등급이 적혀 있고, 그 등급에 해당하는 상품을 받는
+          방식입니다. 일반적인 구성은 다음과 같습니다.
         </p>
-        <ul className='mb-3 list-disc space-y-1 pl-5'>
-          <li><strong>A상</strong> — 메인 캐릭터 대형 피규어 (회차당 1개)</li>
-          <li><strong>B상</strong> — 서브 캐릭터 피규어 또는 비네트</li>
-          <li><strong>C상</strong> — 미니 피규어, 콜드캐스트 모형</li>
-          <li><strong>D~F상</strong> — 머그컵, 타올, 클리어파일, 아크릴 스탠드</li>
-          <li><strong>G상</strong> — 미니 일러스트 카드, 뱃지, 키링</li>
-          <li><strong>라스트원상</strong> — 마지막 티켓을 뽑은 사람에게 지급되는 한정 컬러 피규어</li>
+        <ul className='mb-4 list-disc space-y-2 pl-5 leading-relaxed'>
+          <li>
+            <strong>A상(最高賞)</strong> — 박스에서 가장 퀄리티 높은 대형 피규어. 보통 1~2개만 들어
+            있어 확률이 매우 낮습니다.
+          </li>
+          <li>
+            <strong>B상·C상</strong> — A상 다음 등급으로 중형 피규어, 아크릴 스탠드, 캔뱃지 세트 등
+            구성이 다양합니다. 박스마다 수량이 다릅니다.
+          </li>
+          <li>
+            <strong>D상~F상(하위 등급)</strong> — 클리어 파일, 수건, 머그컵 등 비교적 가격이 낮은
+            굿즈. 수량이 많아 뽑힐 확률이 높습니다.
+          </li>
+          <li>
+            <strong>라스트원상(ラストワン賞)</strong> — 박스의 마지막 남은 티켓을 뽑은 사람에게
+            주어지는 특별 상품. 보통 A상 피규어의 컬러 바리에이션 버전이며, 중고 시장에서 가장 높은
+            가격에 거래됩니다.
+          </li>
+          <li>
+            <strong>더블찬스상</strong> — 일부 회차에서 운영하는 응모형 경품. 꽝 티켓을 모아 응모하면
+            추첨을 통해 추가 상품을 받을 수 있습니다.
+          </li>
         </ul>
         <p className='leading-relaxed'>
-          <strong>더블 찬스 캠페인</strong>도 흔히 함께 진행됩니다. 박스에서 뽑은 티켓 번호 또는 응모권을
-          이용해 추첨식으로 추가 굿즈를 받을 수 있는 이벤트입니다.
+          등급 수와 수량은 회차마다 다르므로, 도전 전에 공식 홈페이지나 매장 안내문에서 반드시
+          확인하세요.
         </p>
       </section>
 
       <section className='mb-8'>
-        <h2 className='mb-3 text-xl font-semibold'>당첨 확률은 어떻게 되나요?</h2>
+        <h2 className='mb-3 text-xl font-semibold'>가격과 비용 계산</h2>
         <p className='mb-3 leading-relaxed'>
-          이치방쿠지는 가챠와 달리 <strong>박스 안 티켓 구성이 미리 정해져 있습니다</strong>. 예를 들어
-          A상 1장, B상 2장, C상 3장처럼 등급별 수량이 고정되어 있고, 박스 한 통을 다 사면 모든 등급이
-          &ldquo;최소 한 장씩&rdquo;은 나오게 설계되어 있습니다.
+          국내 이치방쿠지 가격은 일반적으로 <strong>장당 8,000원~12,000원</strong> 수준입니다.
+          일본 현지가(보통 760엔~1,100엔)보다 환율·수입 마진이 더해져 비싸지만, 공식 수입사를 통해
+          정품을 구매하는 것이 사후 보증 측면에서 안전합니다.
         </p>
+        <ul className='mb-4 list-disc space-y-1 pl-5'>
+          <li>1회 뽑기: 8,000원~12,000원</li>
+          <li>박스 컴플리트(전 티켓 구매): 보통 70만원~120만원 (회차에 따라 상이)</li>
+          <li>A상 단품 중고 거래가: 30,000원~150,000원 이상 (IP·회차 인기도에 따라 변동)</li>
+        </ul>
         <p className='leading-relaxed'>
-          따라서 한 박스에 평균 80장의 티켓이 들어 있다면, A상이 나올 확률은 약 1/80입니다. 초반에 누가
-          이미 A상을 뽑아갔다면, 남은 티켓 안에 A상이 있을 확률은 0이 됩니다. 이 때문에 매장 도착 시
-          <strong> 잔여 등급표</strong>를 먼저 확인하는 것이 중요합니다.
+          전략적으로 접근하고 싶다면 <strong>잔여 티켓 수</strong>를 확인하고, 원하는 등급이 아직
+          남아 있을 때 방문하는 방법이 효과적입니다. 많은 매장이 남은 등급과 수량을 칠판이나
+          POP 안내판에 표시해 둡니다.
         </p>
       </section>
 
       <section className='mb-8'>
-        <h2 className='mb-3 text-xl font-semibold'>한국에서 이치방쿠지 사는 법</h2>
-        <ol className='list-decimal space-y-2 pl-5 leading-relaxed'>
+        <h2 className='mb-3 text-xl font-semibold'>국내 구매처</h2>
+        <p className='mb-3 leading-relaxed'>
+          이치방쿠지는 아무 매장에서나 살 수 있는 게 아닙니다. 반다이남코코리아 공식 파트너 매장에서만
+          정식 취급합니다.
+        </p>
+        <ul className='mb-4 list-disc space-y-2 pl-5 leading-relaxed'>
           <li>
-            <strong>정식 매장 확인.</strong> 반프레스토 정식 라이선스 매장(애니메이트, 일부 가챠 전문샵)에서
-            취급합니다. <Link href='/' className='text-blue-600 hover:underline'>가챠 지도</Link>의 카테고리 필터에서
-            &ldquo;쿠지&rdquo;로 좁혀 검색해 보세요.
+            <strong>애니메이트 코리아</strong> — 홍대, 강남, 신촌, 건대 등 주요 지점에서 최신 회차를
+            정기적으로 입고합니다. 발매일에 맞춰 방문하면 신규 회차를 가장 먼저 만날 수 있습니다.
           </li>
           <li>
-            <strong>회차 발매일 체크.</strong> 신규 회차는 일본과 한국이 보통 1~2주 시차로 발매됩니다.
-            인기 IP(귀멸의 칼날, 원피스, 주술회전 등)는 발매일 당일에 매진되는 경우가 많아 사전 예약을
-            받는 매장도 있습니다.
+            <strong>서브컬처 전문 편집샵</strong> — 홍대, 신촌 골목의 독립 굿즈샵 일부에서 이전 회차
+            재고를 할인 판매하는 경우가 있습니다.
           </li>
           <li>
-            <strong>매장 도착 후 등급표 확인.</strong> 매장에 비치된 보드에 어떤 등급이 몇 장 남았는지가
-            표시됩니다. 원하는 등급이 0인 경우 다른 매장을 알아보거나 다음 회차를 기다리는 편이
-            합리적입니다.
+            <strong>온라인 쇼핑몰</strong> — 스마트스토어·쿠팡 등에서도 판매하지만, 운송 중 파손
+            위험과 정품 여부를 꼼꼼히 확인하세요. 공식 수입품인지 여부를 꼭 체크해야 합니다.
+          </li>
+        </ul>
+        <p className='leading-relaxed'>
+          가까운 이치방쿠지 취급 매장은{' '}
+          <Link href='/' className='text-blue-600 hover:underline'>가챠 지도</Link>에서 카테고리
+          필터를 '쿠지'로 설정해 찾을 수 있습니다.
+        </p>
+      </section>
+
+      <section className='mb-8'>
+        <h2 className='mb-3 text-xl font-semibold'>구매 흐름 — 처음 도전한다면</h2>
+        <ol className='list-decimal space-y-3 pl-5 leading-relaxed'>
+          <li>
+            <strong>원하는 IP·회차 확인.</strong> 반다이남코 공식 SNS나 애니메이트 홈페이지에서
+            현재 판매 중인 회차 목록을 확인합니다. 귀멸의 칼날, 드래곤볼, 원피스 등 IP별로
+            거의 매달 신규 회차가 출시됩니다.
           </li>
           <li>
-            <strong>티켓 한 장씩 결제.</strong> 한 장당 가격은 회차에 따라 8,000원~12,000원 사이입니다.
-            티켓을 뽑은 즉시 매장 직원이 해당 등급의 상품을 봉투에 담아 줍니다.
+            <strong>매장 방문 전 잔여 등급 확인.</strong> 인기 매장에서 A상은 발매 당일 마감되는
+            경우가 많습니다. SNS에서 해당 회차 해시태그를 검색하거나 매장에 전화로 잔여 현황을
+            물어볼 수 있습니다.
           </li>
           <li>
-            <strong>라스트원상 노리기.</strong> 박스의 마지막 티켓을 뽑으면 라스트원상이 추가 지급됩니다.
-            매장에 따라 마지막 1~5장만 따로 판매하거나 사전 예약을 받는 경우가 있습니다.
+            <strong>매장에서 티켓 뽑기.</strong> 직원에게 몇 장 뽑을지 말하면 뭉치에서 랜덤으로
+            티켓을 꺼내줍니다. 직접 고르는 건 불가합니다.
+          </li>
+          <li>
+            <strong>등급 확인 후 상품 수령.</strong> 뽑은 티켓의 등급을 직원이 확인하고 해당
+            상품을 전달해줍니다. 대형 상품은 별도 박스 포장이 됩니다.
+          </li>
+          <li>
+            <strong>중복 또는 원치 않는 등급은 교환 커뮤니티 활용.</strong> 카카오톡 오픈채팅,
+            네이버 카페, 트위터/X에 이치방쿠지 교환 커뮤니티가 활성화되어 있습니다.
           </li>
         </ol>
       </section>
 
       <section className='mb-8'>
-        <h2 className='mb-3 text-xl font-semibold'>박스 단위 구매(박스깡)는 가능할까?</h2>
-        <p className='mb-3 leading-relaxed'>
-          한 박스(약 80장) 통째로 구매하면 모든 등급이 한 번씩은 나오기 때문에 컴플리트가 목표인
-          분에게는 가장 안전한 방법입니다. 박스 가격은 보통 <strong>70만 원~100만 원 선</strong>이며,
-          매장에 따라 박스 단위 판매를 받지 않는 경우도 많습니다. 사전에 매장에 전화로 문의하는 것이
-          좋습니다.
-        </p>
-        <p className='leading-relaxed'>
-          단, 박스깡 후 잔여 등급(D~G상)을 중고로 정리하는 분들도 많아, 정말 A상만 원하는 경우엔
-          개별 구매 + 중고 거래 조합이 더 저렴할 수 있습니다.
-        </p>
-      </section>
-
-      <section className='mb-8'>
-        <h2 className='mb-3 text-xl font-semibold'>구매 시 주의사항</h2>
-        <ul className='list-disc space-y-2 pl-5 leading-relaxed'>
-          <li>
-            <strong>정식 라이선스 여부 확인.</strong> 정식 매장은 반프레스토 로고와 회차 발매 포스터를
-            매장에 비치합니다. 라이선스 없는 매장에서 판매되는 &ldquo;유사 쿠지&rdquo;는 품질·환불 문제 가능성이
-            있습니다.
-          </li>
-          <li>
-            <strong>중복 등급은 환불 불가.</strong> 같은 등급에서 같은 캐릭터가 나오는 경우가 있습니다.
-            교환·환불은 매장에서 받지 않으니 SNS 교환 시장을 활용하세요.
-          </li>
-          <li>
-            <strong>박스 잔여 정보는 실시간 변동.</strong> 인기 회차는 한 시간 사이에 등급이 빠질 수
-            있어, 매장 도착 시점 기준으로 다시 확인해야 합니다.
-          </li>
-        </ul>
+        <h2 className='mb-3 text-xl font-semibold'>자주 하는 질문</h2>
+        <dl className='space-y-4'>
+          <div>
+            <dt className='font-medium'>라스트원상을 노릴 수 있나요?</dt>
+            <dd className='mt-1 text-sm leading-relaxed text-gray-600'>
+              잔여 티켓 수가 1장 남았을 때 방문하면 확정으로 받을 수 있습니다. 단, 그 타이밍을
+              맞추는 게 어렵고, 인기 회차는 마지막 티켓을 위해 많은 사람이 경쟁하기도 합니다.
+            </dd>
+          </div>
+          <div>
+            <dt className='font-medium'>일본 현지와 국내 제품이 다른가요?</dt>
+            <dd className='mt-1 text-sm leading-relaxed text-gray-600'>
+              상품 자체는 동일하지만, 일부 회차는 국내 미출시인 경우도 있습니다. 국내에서 판매되는
+              제품은 반드시 한국어 안내 스티커가 부착되어 있습니다.
+            </dd>
+          </div>
+          <div>
+            <dt className='font-medium'>전 등급 컴플리트를 한 번에 사는 게 나을까요?</dt>
+            <dd className='mt-1 text-sm leading-relaxed text-gray-600'>
+              확실히 모든 상품을 받을 수 있지만, 비용이 70만원 이상으로 올라가고 원치 않는 등급
+              상품도 포함됩니다. 원하는 등급이 1~2개라면 단품 뽑기 후 중고 거래로 구매하는 편이
+              대부분 저렴합니다.
+            </dd>
+          </div>
+        </dl>
       </section>
 
       <div className='rounded-lg border border-gray-200 bg-gray-50 p-4'>
         <p className='mb-2 font-semibold'>관련 가이드</p>
         <ul className='space-y-1'>
-          <li>
-            <Link href='/guide/gacha-beginner' className='text-blue-600 hover:underline'>
-              가챠 입문 가이드 →
-            </Link>
-          </li>
-          <li>
-            <Link href='/guide/capsule-toy-brands' className='text-blue-600 hover:underline'>
-              캡슐토이 브랜드 비교 →
-            </Link>
-          </li>
-          <li>
-            <Link href='/' className='text-blue-600 hover:underline'>
-              가까운 쿠지 매장 찾기 →
-            </Link>
-          </li>
+          <li><Link href='/guide/gacha-beginner' className='text-blue-600 hover:underline'>가챠 입문 가이드 →</Link></li>
+          <li><Link href='/guide/capsule-toy-brands' className='text-blue-600 hover:underline'>캡슐토이 브랜드 비교 →</Link></li>
+          <li><Link href='/' className='text-blue-600 hover:underline'>가까운 매장 찾기 →</Link></li>
         </ul>
       </div>
     </main>

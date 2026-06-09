@@ -1,15 +1,20 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getShopById, getNearbyShops, getVerifiedShops } from '@/lib/supabase';
+import { getShopById, getNearbyShops, supabase } from '@/lib/supabase';
 import ShopImageGallery from '@/components/ShopImageGallery';
 import ShopStaticMap from '@/components/ShopStaticMap';
 
-export const revalidate = 600;
+export const revalidate = 3600;
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const shops = await getVerifiedShops();
-  return shops.map((s) => ({ id: String(s.id) }));
+  const { data } = await supabase
+    .from('shops')
+    .select('id')
+    .eq('is_verified', true)
+    .limit(50);
+  return (data ?? []).map((s: { id: number }) => ({ id: String(s.id) }));
 }
 
 export async function generateMetadata({
@@ -213,3 +218,4 @@ export default async function ShopDetailPage({ params }: { params: { id: string 
     </main>
   );
 }
+

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { getVerifiedShops } from '@/lib/supabase';
 import { Shop } from '@/types/db';
 
-export const revalidate = 600;
+export const revalidate = 3600;
 
 interface RegionDef {
   slug: string;
@@ -177,3 +177,4 @@ export default async function RegionPage({ params }: { params: { slug: string } 
     </main>
   );
 }
+
